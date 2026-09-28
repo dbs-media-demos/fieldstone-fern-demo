@@ -32,8 +32,17 @@ export function SmoothScroll() {
 
   useEffect(() => {
     window.__lenis?.resize();
-    const id = window.setTimeout(() => ScrollTrigger.refresh(), 350);
-    return () => window.clearTimeout(id);
+    // Re-measure once the new layout settles, and again after idle-created reveals exist.
+    const refresh = () => {
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
+    };
+    const a = window.setTimeout(refresh, 350);
+    const b = window.setTimeout(refresh, 2000);
+    return () => {
+      window.clearTimeout(a);
+      window.clearTimeout(b);
+    };
   }, [pathname]);
 
   return null;

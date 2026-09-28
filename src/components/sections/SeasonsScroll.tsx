@@ -75,7 +75,6 @@ function PinnedSeasons() {
       const names = q(".s-name");
       const lines = q(".s-line");
       const lists = q(".s-list");
-      const nums = q(".s-num");
       const ticks = q(".s-tick");
 
       const tl = gsap.timeline({
@@ -92,6 +91,8 @@ function PinnedSeasons() {
             const idx = Math.round(self.progress * 3);
             setMode(seasons[idx].id);
             ticks.forEach((t, i) => t.classList.toggle("is-active", i === idx));
+            const num = root.current?.querySelector("[data-snum]");
+            if (num) num.textContent = `0${idx + 1}`;
           },
         },
       });
@@ -109,13 +110,15 @@ function PinnedSeasons() {
           .fromTo(names[i], { yPercent: 105, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, at + 0.3)
           .to([lines[i - 1], lists[i - 1]], { opacity: 0, y: -24, duration: 0.3 }, at)
           .fromTo([lines[i], lists[i]], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, at + 0.35)
-          .to(nums[i - 1], { yPercent: -100, duration: 0.3 }, at + 0.2)
-          .fromTo(nums[i], { yPercent: 100 }, { yPercent: 0, duration: 0.3 }, at + 0.2)
           .to(root.current, { "--tint": s.tint, "--acc": s.accent, duration: 0.6 }, at);
       }
       tl.fromTo(".s-frost", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 2.2);
       tl.fromTo(".s-progress", { scaleX: 0 }, { scaleX: 1, duration: 3, ease: "none" }, 0);
       tl.to({}, { duration: 0.15 }, 3);
+      // This pin is created after the first render (static → pinned), i.e. after the pins
+      // further down the page. Re-sort by position and re-measure so they account for it.
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
     },
     { scope: root },
   );
@@ -173,14 +176,7 @@ function PinnedSeasons() {
             </h2>
           </div>
           <div className="t-eyebrow flex shrink-0 items-center gap-1 whitespace-nowrap text-cream/80" aria-hidden>
-            <span className="relative inline-block h-[1.2em] w-[2ch] overflow-hidden">
-              {seasons.map((s, i) => (
-                <span key={s.id} className="s-num absolute inset-0" style={{ transform: i ? "translateY(100%)" : undefined }}>
-                  0{i + 1}
-                </span>
-              ))}
-            </span>
-            / 04
+            <span data-snum>01</span>/ 04
           </div>
         </div>
 
