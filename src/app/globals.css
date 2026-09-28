@@ -1,0 +1,642 @@
+@import "tailwindcss";
+
+/* ────────────────────────────────────────────────────────────────
+   Fieldstone & Fern — design tokens
+   Forest / Fern / Moss / Sage greens, Cream + Sand paper tones,
+   Terracotta for action, Lantern gold for evening/lighting moments.
+   Sections pick a palette with .theme-*; components only use the
+   semantic tokens (bg, fg, muted, line, surface, accent).
+   ──────────────────────────────────────────────────────────────── */
+
+:root {
+  --forest: #16241c;
+  --forest-2: #1d2f25;
+  --forest-3: #263b2f;
+  --fern: #2f4a34;
+  --moss: #6e7f4e;
+  --sage: #b9c2a4;
+  --cream: #f3ede1;
+  --cream-2: #ebe3d3;
+  --sand: #e2d5bc;
+  --terracotta: #a3472c;
+  --terracotta-2: #c0603f;
+  --lantern: #e8b45a;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-organic: cubic-bezier(0.65, 0.05, 0.36, 1);
+
+  --gutter: clamp(1rem, 3.4vw, 3.25rem);
+  --header-h: 4.75rem;
+  --radius: 1.5rem;
+  --arch: 999px 999px 1.5rem 1.5rem;
+}
+
+.theme-cream {
+  --bg: var(--cream);
+  --fg: var(--forest);
+  --muted: color-mix(in oklab, var(--forest) 72%, var(--cream));
+  --faint: color-mix(in oklab, var(--forest) 60%, var(--cream));
+  --line: color-mix(in oklab, var(--forest) 14%, transparent);
+  --surface: var(--cream-2);
+  --surface-2: var(--sand);
+  --accent: var(--terracotta);
+  --accent-fg: var(--cream);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+.theme-sand {
+  --bg: var(--sand);
+  --fg: var(--forest);
+  --muted: color-mix(in oklab, var(--forest) 76%, var(--sand));
+  --faint: color-mix(in oklab, var(--forest) 64%, var(--sand));
+  --line: color-mix(in oklab, var(--forest) 16%, transparent);
+  --surface: color-mix(in oklab, var(--sand) 70%, var(--cream));
+  --surface-2: var(--cream);
+  --accent: #97401f;
+  --accent-fg: var(--cream);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+.theme-forest {
+  --bg: var(--forest);
+  --fg: var(--cream);
+  --muted: color-mix(in oklab, var(--cream) 72%, var(--forest));
+  --faint: color-mix(in oklab, var(--cream) 60%, var(--forest));
+  --line: color-mix(in oklab, var(--cream) 14%, transparent);
+  --surface: var(--forest-2);
+  --surface-2: var(--forest-3);
+  --accent: var(--lantern);
+  --accent-fg: var(--forest);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+.theme-fern {
+  --bg: var(--fern);
+  --fg: var(--cream);
+  --muted: color-mix(in oklab, var(--cream) 78%, var(--fern));
+  --faint: color-mix(in oklab, var(--cream) 66%, var(--fern));
+  --line: color-mix(in oklab, var(--cream) 18%, transparent);
+  --surface: color-mix(in oklab, var(--fern) 80%, var(--forest));
+  --surface-2: var(--forest-2);
+  --accent: var(--lantern);
+  --accent-fg: var(--forest);
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+@theme inline {
+  --color-forest: var(--forest);
+  --color-forest-2: var(--forest-2);
+  --color-forest-3: var(--forest-3);
+  --color-fern: var(--fern);
+  --color-moss: var(--moss);
+  --color-sage: var(--sage);
+  --color-cream: var(--cream);
+  --color-cream-2: var(--cream-2);
+  --color-sand: var(--sand);
+  --color-terracotta: var(--terracotta);
+  --color-terracotta-2: var(--terracotta-2);
+  --color-lantern: var(--lantern);
+
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, monospace;
+
+  --ease-out-expo: var(--ease-out-expo);
+  --ease-in-out-quart: var(--ease-in-out-quart);
+  --ease-organic: var(--ease-organic);
+}
+
+/* ─────────────────────────── base ─────────────────────────── */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+  scroll-padding-top: calc(var(--header-h) + 1rem);
+  background: var(--forest);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--lantern);
+  color: var(--forest);
+}
+
+/* In the base layer so Tailwind outline utilities can still override it. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--terracotta);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  .theme-forest :focus-visible,
+  .theme-fern :focus-visible {
+    outline-color: var(--lantern);
+  }
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+/* ─────────────────────────── type ─────────────────────────── */
+
+@utility font-display {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+  font-optical-sizing: auto;
+}
+
+@utility t-mega {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 60, "WONK" 0;
+  font-size: clamp(3.4rem, 12.5vw, 14.5rem);
+  line-height: 0.86;
+  letter-spacing: -0.045em;
+  font-weight: 380;
+}
+
+@utility t-h1 {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 60, "WONK" 0;
+  font-size: clamp(2.9rem, 7.6vw, 8.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  font-weight: 380;
+}
+
+@utility t-h2 {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 60, "WONK" 0;
+  font-size: clamp(2.3rem, 5.2vw, 5.6rem);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
+  font-weight: 380;
+}
+
+@utility t-h3 {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 60, "WONK" 0;
+  font-size: clamp(1.55rem, 2.5vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  font-weight: 420;
+}
+
+@utility t-lead {
+  font-size: clamp(1.14rem, 1.5vw, 1.5rem);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+@utility t-body {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+@utility t-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@utility t-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-weight: 340;
+}
+
+@utility wrap {
+  width: 100%;
+  max-width: 1680px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+@utility arch {
+  border-radius: var(--arch);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+/* Split-text lines revealed by GSAP */
+.split-line {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+
+/* ─────────────── first-paint intros (CSS only, good for LCP) ─────────────── */
+
+@keyframes heading-in {
+  from {
+    clip-path: inset(0 0 48% 0);
+    transform: translateY(0.35em);
+  }
+  to {
+    clip-path: inset(-12% -4% -24% -4%);
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0.1;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes arch-in {
+  from {
+    clip-path: inset(18% 12% 0% 12% round 999px 999px 24px 24px);
+    transform: scale(1.06);
+  }
+  to {
+    clip-path: inset(0% 0% 0% 0% round 999px 999px 24px 24px);
+    transform: none;
+  }
+}
+.anim-heading {
+  animation: heading-in 1.4s var(--ease-out-expo) var(--d, 0s) both;
+}
+.anim-fade {
+  animation: fade-in 1.2s var(--ease-out-expo) calc(var(--d, 0s) + 0.1s) both;
+}
+.anim-arch {
+  animation: arch-in 1.8s var(--ease-out-expo) var(--d, 0s) both;
+}
+
+/* Logo fiddlehead unfurl */
+@keyframes unfurl {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.fiddle-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: unfurl 1.8s var(--ease-organic) 0.2s both;
+}
+
+/* ─────────────────────────── textures ─────────────────────────── */
+
+/* Paper grain overlay */
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: -50%;
+  z-index: 80;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .09  0 0 0 0 .14  0 0 0 0 .11  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 1.4s steps(6) infinite;
+  display: none;
+}
+@media (min-width: 768px) and (hover: hover) {
+  .grain {
+    display: block;
+  }
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -4%); }
+  60% { transform: translate(-1%, 5%); }
+  80% { transform: translate(4%, -1%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Dappled leaf shadows drifting across light sections */
+.leaf-shadows {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+.leaf-shadows > div {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  background: url("/images/leaf-shadow.svg") center / contain no-repeat;
+  opacity: 0.1;
+  filter: blur(7px);
+  mix-blend-mode: multiply;
+  animation: sway 14s ease-in-out infinite alternate;
+  transform-origin: 20% 10%;
+}
+@keyframes sway {
+  from { transform: rotate(-3deg) translate3d(0, 0, 0) scale(1); }
+  to { transform: rotate(4deg) translate3d(2%, 3%, 0) scale(1.04); }
+}
+
+/* Marquee */
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.marquee {
+  animation: marquee var(--speed, 40s) linear infinite;
+}
+.marquee-rev {
+  animation-direction: reverse;
+}
+.marquee-wrap:hover .marquee {
+  animation-play-state: paused;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Live "open now" dot */
+@keyframes pulse-dot {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 55%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+.pulse-dot {
+  animation: pulse-dot 1.8s ease-out infinite;
+}
+
+/* Rich text */
+.prose-ff {
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.prose-ff > * + * {
+  margin-top: 1.1em;
+}
+.prose-ff h2 {
+  color: var(--fg);
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-top: 2em;
+}
+.prose-ff ul {
+  padding-left: 1.2em;
+  list-style: none;
+}
+.prose-ff ul > li {
+  position: relative;
+}
+.prose-ff ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.1em;
+  top: 0.7em;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 99px 99px 99px 0;
+  background: var(--moss);
+}
+.prose-ff strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+.prose-ff a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─────────────────────── view transitions ─────────────────────── */
+
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* Page change: old page settles back, new page rises through an arch */
+::view-transition-old(.page) {
+  animation: page-out 560ms var(--ease-in-out-quart) both;
+}
+::view-transition-new(.page) {
+  animation: page-in 1000ms var(--ease-out-expo) 140ms both;
+}
+@keyframes page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-3vh) scale(0.975);
+  }
+}
+@keyframes page-in {
+  from {
+    clip-path: inset(100% 0 0 0 round 50vw 50vw 0 0);
+    transform: translateY(10vh);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 0 0 0 0);
+    transform: translateY(0);
+  }
+}
+
+::view-transition-group(.morph) {
+  animation-duration: 750ms;
+  animation-timing-function: var(--ease-out-expo);
+}
+::view-transition-image-pair(.morph) {
+  animation-name: via-blur;
+}
+@keyframes via-blur {
+  35% {
+    filter: blur(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Home hero arch window (initial state matches the scroll scene's start) */
+.hero-frame {
+  --hf: inset(15% 29% 0% 29% round 21vw 21vw 0px 0px);
+  --hf-from: inset(34% 36% 0% 36% round 14vw 14vw 0px 0px);
+  clip-path: var(--hf);
+}
+@media (max-width: 767px) {
+  .hero-frame {
+    --hf: inset(30% 5% 0% 5% round 45vw 45vw 0px 0px);
+    --hf-from: inset(48% 16% 0% 16% round 34vw 34vw 0px 0px);
+  }
+}
+@keyframes hero-frame-in {
+  from {
+    clip-path: var(--hf-from);
+  }
+}
+.anim-hero-frame {
+  animation: hero-frame-in 1.9s var(--ease-out-expo) both;
+}
+
+/* Range sliders (night reveal, lawn builder) */
+input[type="range"].night-range,
+input[type="range"].yard-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"].night-range::-webkit-slider-runnable-track {
+  height: 2px;
+  background: linear-gradient(90deg, #f0955f, var(--lantern));
+  border-radius: 2px;
+}
+input[type="range"].night-range::-moz-range-track {
+  height: 2px;
+  background: linear-gradient(90deg, #f0955f, var(--lantern));
+}
+input[type="range"].yard-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--moss) var(--fill, 50%), color-mix(in oklab, var(--forest) 14%, transparent) var(--fill, 50%));
+}
+input[type="range"].yard-range::-moz-range-track {
+  height: 6px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--forest) 14%, transparent);
+}
+input[type="range"].yard-range::-moz-range-progress {
+  height: 6px;
+  border-radius: 6px;
+  background: var(--moss);
+}
+input[type="range"].night-range::-webkit-slider-thumb,
+input[type="range"].yard-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -13px;
+  border-radius: 999px;
+  background: var(--lantern);
+  border: 3px solid var(--forest);
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--lantern) 30%, transparent);
+}
+input[type="range"].yard-range::-webkit-slider-thumb {
+  margin-top: -11px;
+  background: var(--cream);
+  border-color: var(--fern);
+  box-shadow: 0 4px 16px rgba(22, 36, 28, 0.25);
+}
+input[type="range"].night-range::-moz-range-thumb,
+input[type="range"].yard-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--lantern);
+  border: 3px solid var(--forest);
+}
+
+/* Lawn builder mower: back-and-forth passes across the stripes */
+.yard-mower {
+  animation: mow 9s linear infinite;
+}
+@keyframes mow {
+  0% { transform: translate(60px, 140px) rotate(90deg); }
+  22% { transform: translate(420px, 140px) rotate(90deg); }
+  25% { transform: translate(420px, 196px) rotate(270deg); }
+  47% { transform: translate(60px, 196px) rotate(270deg); }
+  50% { transform: translate(60px, 252px) rotate(90deg); }
+  72% { transform: translate(420px, 252px) rotate(90deg); }
+  75% { transform: translate(420px, 308px) rotate(270deg); }
+  97% { transform: translate(60px, 308px) rotate(270deg); }
+  100% { transform: translate(60px, 140px) rotate(90deg); }
+}
+
+/* FAQ accordion: animate native <details> open/close where supported */
+:root {
+  interpolate-size: allow-keywords;
+}
+.faq::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition:
+    block-size 0.55s var(--ease-out-expo),
+    content-visibility 0.55s allow-discrete;
+}
+.faq[open]::details-content {
+  block-size: auto;
+}
+
+/* Hero still photo breathes slowly until the video takes over */
+@keyframes still-zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+.hero-still {
+  animation: still-zoom 14s ease-out 0.6s both;
+}
