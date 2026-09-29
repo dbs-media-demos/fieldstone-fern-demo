@@ -4,7 +4,7 @@
 - Market / city: US – Southlake / Fort Worth, TX (also Keller, Colleyville, Grapevine, Flower Mound)
 - Languages: en
 - Live URL: https://fieldstone-fern-demo.vercel.app
-- Repo: local only (git initialized; GitHub org/account still to be chosen)
+- Repo: https://github.com/dbs-media-demos/fieldstone-fern-demo (public, branch main)
 - Folder: DBS Media Portfolio/Demo Websites/landscaping
 - Stack: Next.js 16.3.6, React 19.2.8, Tailwind v4, GSAP 3.15 (ScrollTrigger, SplitText, Flip), Lenis
 - Palette: #16241C forest · #2F4A34 fern · #6E7F4E moss · #B9C2A4 sage · #F3EDE1 cream · #E2D5BC sand · #A3472C terracotta · #E8B45A lantern
