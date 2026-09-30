@@ -1,6 +1,6 @@
 # Fieldstone & Fern Landscapes (Scale by Noon demo)
 
-- Niche: Landscaping & lawn care         (matches scale-by-noon.vercel.app industry id: landscaping)
+- Niche: Landscaping & lawn care         (matches www.scalebynoon.com industry id: landscaping)
 - Market / city: US – Southlake / Fort Worth, TX (also Keller, Colleyville, Grapevine, Flower Mound)
 - Languages: en
 - Live URL: https://fieldstone-fern-demo.vercel.app
