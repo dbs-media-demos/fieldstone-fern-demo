@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Mark } from "@/components/brand/Logo";
 import { OpenBadge } from "@/components/ui/OpenBadge";
-import { site, telHref, mailHref } from "@/content/site";
+import { site, telHref, mailHref, agencyName, agencyUrl } from "@/content/site";
 import { services } from "@/content/services";
 import { cities } from "@/content/cities";
 
@@ -109,13 +109,13 @@ export function Footer() {
             <Link href="/privacy" className="inline-flex min-h-10 items-center hover:text-fg">
               Privacy
             </Link>
-            <a href="https://dbs-media.com" className="inline-flex min-h-10 items-center hover:text-fg">
-              Design &amp; development: DBS Media
+            <a href={agencyUrl} className="inline-flex min-h-10 items-center hover:text-fg">
+              Design &amp; development: {agencyName}
             </a>
           </div>
         </div>
         <p className="mt-4 text-xs text-faint">
-          Concept website: Fieldstone &amp; Fern is a fictional business created by DBS Media to demonstrate a landscaping website. Reviews, projects and people are illustrative.
+          Concept website: Fieldstone &amp; Fern is a fictional business created by {agencyName} to demonstrate a landscaping website. Reviews, projects and people are illustrative.
         </p>
       </div>
     </footer>

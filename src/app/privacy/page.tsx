@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageShell, Breadcrumbs, JsonLd } from "@/components/ui/Page";
-import { site, mailHref } from "@/content/site";
+import { site, mailHref, agencyName } from "@/content/site";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, graph, webPageSchema } from "@/lib/schema";
 
@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <p className="mt-4 text-muted">Last updated September 28, 2026</p>
           <div className="prose-ff mt-12">
             <p>
-              <strong>This is a concept website.</strong> {site.legalName} is a fictional business created by DBS Media to demonstrate a landscaping
+              <strong>This is a concept website.</strong> {site.legalName} is a fictional business created by {agencyName} to demonstrate a landscaping
               website. Forms on this site validate your input but do not send or store it anywhere.
             </p>
             <h2>What a live version would collect</h2>

@@ -4,13 +4,13 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { telHref } from "@/content/site";
+import { agencyName, agencyUrl, telHref } from "@/content/site";
 import { PhoneIcon } from "@/components/ui/Button";
 import { gsap, isTouch, prefersReducedMotion } from "@/lib/gsap";
 
 const noop = () => () => {};
 
-/** "Concept site by DBS Media ↗" pill, dismissible for the session. */
+/** "Concept site by Scale by Noon ↗" pill, dismissible for the session. */
 export function DemoPill() {
   const stored = useSyncExternalStore(
     noop,
@@ -27,9 +27,9 @@ export function DemoPill() {
   if (stored || closed) return null;
   return (
     <div className="fixed bottom-[5.4rem] left-3 z-40 flex items-center rounded-full bg-forest/92 text-cream shadow-lg shadow-black/20 backdrop-blur lg:bottom-4 lg:left-4">
-      <a href="https://dbs-media.com" className="inline-flex min-h-10 items-center gap-1.5 py-2 pl-4 pr-2 text-[0.8rem] tracking-[-0.005em]">
+      <a href={agencyUrl} className="inline-flex min-h-10 items-center gap-1.5 py-2 pl-4 pr-2 text-[0.8rem] tracking-[-0.005em]">
         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-lantern" />
-        Concept site by DBS Media <span aria-hidden>↗</span>
+        Concept site by {agencyName} <span aria-hidden>↗</span>
       </a>
       <button
         type="button"

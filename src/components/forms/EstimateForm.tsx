@@ -8,7 +8,7 @@ import { Mark } from "@/components/brand/Logo";
 import { Arrow } from "@/components/ui/Button";
 import { services } from "@/content/services";
 import { cities } from "@/content/cities";
-import { site, telHref } from "@/content/site";
+import { site, telHref, agencyName } from "@/content/site";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
 
 const STEPS = ["Services", "Property", "Timing", "Contact"];
@@ -139,7 +139,7 @@ export function EstimateForm() {
           </div>
         </dl>
         <p className="mt-10 text-sm text-cream/60">
-          This is a concept website by DBS Media, so nothing was actually sent. On a live site, this request would go straight to the office and your phone.
+          This is a concept website by {agencyName}, so nothing was actually sent. On a live site, this request would go straight to the office and your phone.
         </p>
         <a href={telHref} className="mt-6 inline-flex min-h-11 items-center gap-2 text-lantern underline-offset-4 hover:underline">
           Can&rsquo;t wait? Call {site.phoneDisplay}

@@ -1,8 +1,12 @@
 /**
- * Business facts for the fictional Fieldstone & Fern Landscapes (DBS Media concept site).
+ * Business facts for the fictional Fieldstone & Fern Landscapes (Scale by Noon concept site).
  * Used across the UI, structured data and share images.
  */
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://fieldstone-fern-demo.vercel.app").replace(/\/$/, "");
+
+/** The agency that built this concept site. Change the URL here only (custom domain later). */
+export const agencyName = "Scale by Noon";
+export const agencyUrl = "https://scale-by-noon.vercel.app";
 
 export const noindex = process.env.NEXT_PUBLIC_NOINDEX !== "false";
 

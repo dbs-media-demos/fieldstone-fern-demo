@@ -135,4 +135,4 @@ All photos are from Unsplash (Unsplash License) or Pexels (Pexels License), down
 | images/craftsman-dusk-2.jpg | https://www.pexels.com/photo/5524165/ | Clay Elliot |
 | video/hero.mp4 + images/hero-poster.jpg | https://www.pexels.com/video/11018217/ | Justin Stretch |
 | video/sprinkler.mp4 + images/sprinkler-poster.jpg | https://www.pexels.com/video/16628741/ | Arsel Ozgurdal |
-| images/leaf-shadow.svg | Generated for this project | DBS Media |
+| images/leaf-shadow.svg | Generated for this project | Scale by Noon |

@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { Cursor, DemoPill, MobileBar } from "@/components/layout/Chrome";
 import { JsonLd } from "@/components/ui/Page";
-import { noindex, site, siteUrl } from "@/content/site";
+import { agencyName, agencyUrl, noindex, site, siteUrl } from "@/content/site";
 import { businessSchema, graph, websiteSchema } from "@/lib/schema";
 
 const fraunces = Fraunces({
@@ -39,8 +39,8 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.legalName,
-  authors: [{ name: "DBS Media", url: "https://dbs-media.com" }],
-  creator: "DBS Media",
+  authors: [{ name: agencyName, url: agencyUrl }],
+  creator: agencyName,
   formatDetection: { telephone: false },
   robots: noindex
     ? { index: false, follow: false, googleBot: { index: false, follow: false } }

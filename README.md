@@ -1,6 +1,6 @@
-# Fieldstone & Fern Landscapes: DBS Media concept site
+# Fieldstone & Fern Landscapes: Scale by Noon concept site
 
-A demo website for a fictional landscaping and lawn-care company in Southlake / Fort Worth, Texas, built by [DBS Media](https://dbs-media.com).
+A demo website for a fictional landscaping and lawn-care company in Southlake / Fort Worth, Texas, built by [Scale by Noon](https://scale-by-noon.vercel.app).
 See `DEMO.md` for the portfolio handoff.
 
 ## Stack

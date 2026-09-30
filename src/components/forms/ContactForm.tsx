@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Field, Input, Select, Textarea, emailOk } from "./Fields";
 import { Mark } from "@/components/brand/Logo";
 import { Arrow } from "@/components/ui/Button";
+import { agencyName } from "@/content/site";
 
 /** Simple contact form with inline validation and a success state (concept site: nothing is sent). */
 export function ContactForm() {
@@ -25,7 +26,7 @@ export function ContactForm() {
           Message received, {d.name.split(" ")[0]}.
         </h2>
         <p className="mt-4 max-w-md text-cream/80">We reply to every message within one business day, usually much sooner.</p>
-        <p className="mt-6 text-sm text-cream/60">Concept website by DBS Media: nothing was actually sent.</p>
+        <p className="mt-6 text-sm text-cream/60">Concept website by {agencyName}: nothing was actually sent.</p>
       </div>
     );
 
