@@ -6,6 +6,7 @@ import { Photo } from "@/components/ui/Photo";
 import { Arrow } from "@/components/ui/Button";
 import { projects, categories } from "@/content/projects";
 import { gsap, useGSAP, prefersReducedMotion, isTouch } from "@/lib/gsap";
+import { useBiz } from "@/components/preview/BizContext";
 
 /**
  * Horizontal project gallery. On desktop the section pins and the rail slides
@@ -13,6 +14,7 @@ import { gsap, useGSAP, prefersReducedMotion, isTouch } from "@/lib/gsap";
  * On touch it's a native swipeable rail with scroll-snap.
  */
 export function ProjectsRail() {
+  const biz = useBiz();
   const root = useRef<HTMLElement>(null);
   const track = useRef<HTMLDivElement>(null);
 
@@ -94,7 +96,7 @@ export function ProjectsRail() {
                 <div className="mt-5 flex items-start justify-between gap-4">
                   <div>
                     <p className="t-eyebrow text-faint">
-                      {p.city} · {label(p.category)} · {p.year}
+                      {biz.preview ? biz.area : p.city} · {label(p.category)} · {p.year}
                     </p>
                     <h3 className="t-h3 mt-2">{p.title}</h3>
                   </div>

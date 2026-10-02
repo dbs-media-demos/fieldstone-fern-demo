@@ -7,11 +7,15 @@ import clsx from "clsx";
 import { Logo } from "@/components/brand/Logo";
 import { Button, PhoneIcon } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
-import { nav, site, telHref } from "@/content/site";
+import { nav } from "@/content/site";
+import { useBiz } from "@/components/preview/BizContext";
+import { telOf } from "@/lib/biz-core";
 import { services } from "@/content/services";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
 
 export function Header() {
+  const biz = useBiz();
+  const telHref = telOf(biz) ?? "";
   const pathname = usePathname();
   // top: transparent over the hero · dark: over a dark section · light: over a light section
   const [mode, setMode] = useState<"top" | "dark" | "light">("top");
@@ -97,7 +101,7 @@ export function Header() {
         )}
       >
         <div className="wrap flex h-[var(--header-h)] items-center justify-between gap-6">
-          <Link href="/" aria-label={`${site.legalName}, home`} className="relative z-10">
+          <Link href="/" aria-label={`${biz.name}, home`} className="relative z-10">
             <Logo animate className={clsx(solid ? "[--accent:var(--terracotta)]" : "[--accent:var(--lantern)]")} />
           </Link>
 
@@ -130,7 +134,7 @@ export function Header() {
           <div className="relative z-10 flex items-center gap-2">
             <a href={telHref} className="hidden h-11 items-center gap-2 px-3 text-[0.95rem] xl:inline-flex">
               <PhoneIcon />
-              {site.phoneDisplay}
+              {biz.phoneDisplay}
             </a>
             <span className="hidden sm:block">
               <Button href="/free-estimate" variant={solid ? "primary" : "light"} className="!min-h-11 !px-5">
@@ -192,7 +196,7 @@ export function Header() {
               ))}
             </ul>
             <a href={telHref} className="font-display text-3xl text-lantern">
-              {site.phoneDisplay}
+              {biz.phoneDisplay}
             </a>
           </div>
         </div>

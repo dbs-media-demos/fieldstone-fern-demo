@@ -1,13 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Hanken_Grotesk, DM_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
-import { Cursor, DemoPill, MobileBar } from "@/components/layout/Chrome";
-import { JsonLd } from "@/components/ui/Page";
+import { Cursor } from "@/components/layout/Chrome";
 import { agencyName, agencyUrl, noindex, site, siteUrl } from "@/content/site";
-import { businessSchema, graph, websiteSchema } from "@/lib/schema";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -63,13 +59,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <JsonLd data={graph(businessSchema(), websiteSchema())} />
         <SmoothScroll />
-        <Header />
+        {/* Header, footer and the rest come from (site)/layout or for/[token]/layout (SiteChrome) */}
         {children}
-        <Footer />
-        <MobileBar />
-        <DemoPill />
         <Cursor />
         <div aria-hidden className="grain" />
       </body>

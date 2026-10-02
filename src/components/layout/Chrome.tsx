@@ -4,7 +4,9 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { agencyName, agencyUrl, telHref } from "@/content/site";
+import { agencyName, agencyUrl } from "@/content/site";
+import { useBiz } from "@/components/preview/BizContext";
+import { telOf } from "@/lib/biz-core";
 import { PhoneIcon } from "@/components/ui/Button";
 import { gsap, isTouch, prefersReducedMotion } from "@/lib/gsap";
 
@@ -12,6 +14,7 @@ const noop = () => () => {};
 
 /** "Concept site by Scale by Noon ↗" pill, dismissible for the session. */
 export function DemoPill() {
+  const biz = useBiz();
   const stored = useSyncExternalStore(
     noop,
     () => {
@@ -29,7 +32,15 @@ export function DemoPill() {
     <div className="fixed bottom-[5.4rem] left-3 z-40 flex items-center rounded-full bg-forest/92 text-cream shadow-lg shadow-black/20 backdrop-blur lg:bottom-4 lg:left-4">
       <a href={agencyUrl} className="inline-flex min-h-10 items-center gap-1.5 py-2 pl-4 pr-2 text-[0.8rem] tracking-[-0.005em]">
         <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-lantern" />
-        Concept site by {agencyName} <span aria-hidden>↗</span>
+        {biz.preview ? (
+          <span className="inline-block max-w-[15rem] truncate align-bottom sm:max-w-none">
+            Preview for {biz.shortName} · by {agencyName} <span aria-hidden>↗</span>
+          </span>
+        ) : (
+          <>
+            Concept site by {agencyName} <span aria-hidden>↗</span>
+          </>
+        )}
       </a>
       <button
         type="button"
@@ -50,12 +61,13 @@ export function DemoPill() {
 
 /** Sticky bottom bar on phones: Call + Free estimate. */
 export function MobileBar() {
+  const biz = useBiz();
   const pathname = usePathname();
   if (pathname === "/free-estimate") return null;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-forest/10 bg-cream/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
       <div className="grid grid-cols-2 gap-2">
-        <a href={telHref} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-forest/20 font-medium text-forest">
+        <a href={telOf(biz)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-forest/20 font-medium text-forest">
           <PhoneIcon /> Call
         </a>
         <Link href="/free-estimate" className="inline-flex min-h-12 items-center justify-center rounded-full bg-terracotta font-medium text-cream">

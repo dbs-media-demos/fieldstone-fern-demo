@@ -4,7 +4,9 @@ import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
 import { Parallax, Reveal, SplitReveal } from "@/components/ui/Reveal";
 import { reviews, type Review } from "@/content/misc";
-import { site, telHref } from "@/content/site";
+import { site } from "@/content/site";
+import { defaultBiz } from "@/lib/biz";
+import { telOf, type Biz } from "@/lib/biz-core";
 
 export function Stars({ n = 5, className }: { n?: number; className?: string }) {
   return (
@@ -31,7 +33,7 @@ export function GoogleG({ className }: { className?: string }) {
 
 const fmtDate = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" });
 
-export function ReviewCard({ r, className }: { r: Review; className?: string }) {
+export function ReviewCard({ r, className, area }: { r: Review; className?: string; area?: string }) {
   return (
     <figure className={clsx("flex h-full flex-col justify-between gap-6 rounded-[1.5rem] border border-line bg-bg p-6 sm:p-7", className)}>
       <div>
@@ -48,7 +50,7 @@ export function ReviewCard({ r, className }: { r: Review; className?: string }) 
         <span className="text-sm leading-tight">
           <span className="block font-semibold">{r.name}</span>
           <span className="text-muted">
-            {r.where} · {r.service} · {fmtDate(r.date)}
+            {area ?? r.where} · {r.service} · {fmtDate(r.date)}
           </span>
         </span>
       </figcaption>
@@ -57,7 +59,9 @@ export function ReviewCard({ r, className }: { r: Review; className?: string }) 
 }
 
 /** Rating summary + two opposing marquees of review cards. */
-export function ReviewsWall() {
+export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
+  // Previews keep the sample reviews, placed in the business's area and labelled as samples
+  const area = biz.preview ? biz.area : undefined;
   const a = reviews.slice(0, 6);
   const b = reviews.slice(6);
   return (
@@ -65,29 +69,31 @@ export function ReviewsWall() {
       <div className="wrap grid gap-8 lg:grid-cols-12 lg:items-end">
         <div className="lg:col-span-7">
           <Reveal as="p" className="t-eyebrow text-accent">
-            Reviews
+            {biz.preview ? "Reviews · samples" : "Reviews"}
           </Reveal>
           <SplitReveal className="t-h2 mt-5 max-w-[16ch]">
-            312 neighbors, <span className="t-italic">one</span> recurring theme: the same crew.
+            {biz.preview && !biz.rating ? "Neighbors," : `${(biz.rating ?? site.rating).count} neighbors,`} <span className="t-italic">one</span> recurring theme: the same crew.
           </SplitReveal>
         </div>
-        <Reveal className="flex items-center gap-5 lg:col-span-5 lg:justify-end" delay={0.1}>
-          <div className="flex items-center gap-4 rounded-[1.5rem] border border-line bg-bg px-6 py-5">
-            <GoogleG className="h-9 w-9" />
-            <div>
-              <p className="font-display text-5xl leading-none tracking-[-0.04em]">{site.rating.value}</p>
-              <Stars className="mt-2 text-[#e3a008]" />
+        {biz.rating && (
+          <Reveal className="flex items-center gap-5 lg:col-span-5 lg:justify-end" delay={0.1}>
+            <div className="flex items-center gap-4 rounded-[1.5rem] border border-line bg-bg px-6 py-5">
+              <GoogleG className="h-9 w-9" />
+              <div>
+                <p className="font-display text-5xl leading-none tracking-[-0.04em]">{biz.rating.value}</p>
+                <Stars className="mt-2 text-[#e3a008]" />
+              </div>
+              <p className="max-w-[9rem] text-sm text-muted">from {biz.rating.count} Google reviews</p>
             </div>
-            <p className="max-w-[9rem] text-sm text-muted">from {site.rating.count} Google reviews</p>
-          </div>
-        </Reveal>
+          </Reveal>
+        )}
       </div>
 
       <div className="marquee-wrap mt-14 space-y-5 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]">
         {[a, b].map((row, ri) => (
           <div key={ri} className={clsx("marquee flex w-max gap-5", ri && "marquee-rev")} style={{ ["--speed" as string]: ri ? "75s" : "65s" }}>
             {[...row, ...row].map((r, i) => (
-              <ReviewCard key={i} r={r} className="w-[min(86vw,26rem)] shrink-0" />
+              <ReviewCard key={i} r={r} area={area} className="w-[min(86vw,26rem)] shrink-0" />
             ))}
           </div>
         ))}
@@ -134,10 +140,12 @@ export function CtaBand({
   ),
   text = "Free estimates, usually within the week. Twenty minutes, one designer, zero pressure.",
   image = "oak-bench",
+  biz = defaultBiz,
 }: {
   title?: React.ReactNode;
   text?: string;
   image?: string;
+  biz?: Biz;
 }) {
   return (
     <section className="theme-forest relative isolate overflow-hidden">
@@ -155,9 +163,11 @@ export function CtaBand({
             <Button href="/free-estimate" variant="lantern">
               Get a free estimate
             </Button>
-            <Button href={telHref} variant="ghost" icon="phone" className="text-cream">
-              {site.phoneDisplay}
-            </Button>
+            {biz.phone && (
+              <Button href={telOf(biz)!} variant="ghost" icon="phone" className="text-cream">
+                {biz.phoneDisplay}
+              </Button>
+            )}
           </div>
         </Reveal>
       </div>

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
 import { OpenBadge } from "@/components/ui/OpenBadge";
-import { site } from "@/content/site";
+import { useBiz } from "@/components/preview/BizContext";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 
 /**
@@ -14,6 +14,7 @@ import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
  * The intro is CSS-only (poster image is the LCP element); the scroll scene is JS.
  */
 export function Hero() {
+  const biz = useBiz();
   const root = useRef<HTMLElement>(null);
   const [playVideo, setPlayVideo] = useState(false);
 
@@ -88,12 +89,12 @@ export function Hero() {
 
         <div className="wrap relative flex h-full flex-col justify-between pb-36 pt-[calc(var(--header-h)+1.5rem)] lg:pb-20">
           <h1 className="relative flex flex-1 flex-col justify-between pb-8">
-            <span className="t-eyebrow anim-fade block text-lantern">Landscaping &amp; lawn care · Southlake, Texas</span>
+            <span className="t-eyebrow anim-fade block text-lantern">{biz.preview ? `Landscaping & lawn care · ${biz.area}` : "Landscaping & lawn care · Southlake, Texas"}</span>
             <span
               className="hero-l1 t-mega anim-heading mt-4 block text-cream [text-shadow:0_2px_40px_rgba(22,36,28,0.35)] md:mt-6"
               style={{ ["--d" as string]: "0.1s" }}
             >
-              Grown for Texas.
+              {biz.preview ? "Grown here." : "Grown for Texas."}
             </span>
             <span
               className="hero-l2 t-mega anim-heading block text-right text-cream [text-shadow:0_2px_40px_rgba(22,36,28,0.35)]"
@@ -113,12 +114,14 @@ export function Hero() {
               </Button>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-cream/90">
-              <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm">
-                <span className="text-lantern" aria-hidden>
-                  ★★★★★
-                </span>
-                {site.rating.value} · {site.rating.count} Google reviews
-              </Link>
+              {biz.rating && (
+                <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm">
+                  <span className="text-lantern" aria-hidden>
+                    ★★★★★
+                  </span>
+                  {biz.rating.value} · {biz.rating.count} Google reviews
+                </Link>
+              )}
               <OpenBadge />
             </div>
           </div>

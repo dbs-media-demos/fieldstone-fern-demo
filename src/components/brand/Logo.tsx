@@ -1,4 +1,7 @@
+"use client";
+
 import clsx from "clsx";
+import { useBiz } from "@/components/preview/BizContext";
 
 /**
  * Fieldstone & Fern mark: a cairn of three field stones with a fern fiddlehead
@@ -44,12 +47,19 @@ export function Mark({ className, animate = false, title }: { className?: string
 }
 
 export function Logo({ className, animate = false, compact = false }: { className?: string; animate?: boolean; compact?: boolean }) {
+  const biz = useBiz();
   return (
     <span className={clsx("inline-flex items-center gap-2.5", className)}>
       <Mark className="h-9 w-9 shrink-0" animate={animate} />
       {!compact && (
         <span className="font-display text-[1.28rem] leading-none tracking-[-0.02em] whitespace-nowrap">
-          Fieldstone <span className="t-italic text-[1.12em] text-accent">&amp;</span> Fern
+          {biz.preview ? (
+            <span className="block max-w-[11rem] truncate pb-0.5 sm:max-w-[15rem] xl:max-w-[20rem]">{biz.shortName}</span>
+          ) : (
+            <>
+              Fieldstone <span className="t-italic text-[1.12em] text-accent">&amp;</span> Fern
+            </>
+          )}
         </span>
       )}
     </span>

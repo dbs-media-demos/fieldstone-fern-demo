@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Mark } from "@/components/brand/Logo";
 import { OpenBadge } from "@/components/ui/OpenBadge";
-import { site, telHref, mailHref, agencyName, agencyUrl } from "@/content/site";
+import { site, mailHref, agencyName, agencyUrl } from "@/content/site";
+import { defaultBiz } from "@/lib/biz";
+import { DAY_NAMES, dayRange, telOf, weekFromMonday, type Biz } from "@/lib/biz-core";
 import { services } from "@/content/services";
 import { cities } from "@/content/cities";
 
@@ -15,23 +17,25 @@ const company = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function Footer() {
+export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
   return (
     <footer className="theme-forest relative overflow-hidden pb-28 pt-20 lg:pb-10">
       <div className="wrap">
         <div className="grid gap-12 border-b border-line pb-14 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <p className="t-eyebrow text-accent">Southlake · Fort Worth, Texas</p>
+            <p className="t-eyebrow text-accent">{biz.preview ? biz.area : "Southlake · Fort Worth, Texas"}</p>
             <p className="font-display mt-5 max-w-sm text-[1.9rem] leading-[1.1] tracking-[-0.02em]">
               Same crew. Same day. <span className="t-italic text-accent">Every week.</span>
             </p>
             <div className="mt-8 space-y-2 text-lg">
-              <a href={telHref} className="block w-fit underline-offset-4 hover:underline">
-                {site.phoneDisplay}
+              <a href={telOf(biz)} className="block w-fit underline-offset-4 hover:underline">
+                {biz.phoneDisplay}
               </a>
-              <a href={mailHref} className="block w-fit text-muted underline-offset-4 hover:underline">
-                {site.email}
-              </a>
+              {!biz.preview && (
+                <a href={mailHref} className="block w-fit text-muted underline-offset-4 hover:underline">
+                  {site.email}
+                </a>
+              )}
             </div>
             <OpenBadge className="mt-6" />
           </div>
@@ -65,17 +69,20 @@ export function Footer() {
           <div className="lg:col-span-3">
             <h2 className="t-eyebrow text-faint">Service areas</h2>
             <ul className="mt-5 space-y-1">
-              {cities.map((c) => (
+              {(biz.preview ? [{ slug: "", label: biz.area }] : cities.map((c) => ({ slug: c.slug, label: `${c.name}, TX` }))).map((c) => (
                 <li key={c.slug}>
                   <Link href={`/service-areas/${c.slug}`} className="inline-flex min-h-10 items-center text-muted transition-colors hover:text-fg">
-                    {c.name}, TX
+                    {c.label}
                   </Link>
                 </li>
               ))}
             </ul>
             <h2 className="t-eyebrow mt-8 text-faint">Hours</h2>
             <dl className="mt-4 space-y-1.5 text-muted">
-              {site.hoursDisplay.map((h) => (
+              {(biz.preview
+                ? weekFromMonday(biz.hours ?? []).map((h) => ({ label: DAY_NAMES.en[h.day], value: dayRange(h, "en") }))
+                : site.hoursDisplay
+              ).map((h) => (
                 <div key={h.label} className="flex justify-between gap-6">
                   <dt>{h.label}</dt>
                   <dd className="text-fg">{h.value}</dd>
@@ -86,7 +93,7 @@ export function Footer() {
         </div>
 
         <ul className="flex flex-wrap gap-x-8 gap-y-3 border-b border-line py-8 text-sm text-muted">
-          {site.credentials.map((c) => (
+          {(biz.preview ? site.credentials.filter((c) => !/Arborist|TCEQ|\$2M/.test(c)) : site.credentials).map((c) => (
             <li key={c} className="flex items-center gap-2">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-lantern" />
               {c}
@@ -95,15 +102,22 @@ export function Footer() {
         </ul>
 
         <div aria-hidden className="relative select-none py-10">
-          <div className="font-display flex items-center gap-[2vw] whitespace-nowrap text-[clamp(3rem,11.6vw,12.5rem)] leading-[0.9] tracking-[-0.045em] text-cream/95">
-            <Mark className="h-[0.8em] w-[0.8em] shrink-0 text-lantern" />
-            Fieldstone <span className="t-italic text-lantern">&amp;</span> Fern
-          </div>
+          {biz.preview ? (
+            <div className="font-display flex items-center gap-[2vw] text-[clamp(2.4rem,7vw,7.5rem)] leading-[0.95] tracking-[-0.045em] text-cream/95">
+              <Mark className="h-[0.8em] w-[0.8em] shrink-0 text-lantern" />
+              <span className="min-w-0 [overflow-wrap:anywhere]">{biz.shortName}</span>
+            </div>
+          ) : (
+            <div className="font-display flex items-center gap-[2vw] whitespace-nowrap text-[clamp(3rem,11.6vw,12.5rem)] leading-[0.9] tracking-[-0.045em] text-cream/95">
+              <Mark className="h-[0.8em] w-[0.8em] shrink-0 text-lantern" />
+              Fieldstone <span className="t-italic text-lantern">&amp;</span> Fern
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4 text-sm text-faint md:flex-row md:items-center md:justify-between">
           <p>
-            © {new Date().getFullYear()} {site.legalName} · {site.address.street}, {site.address.city}, {site.address.region} {site.address.zip}
+            © {new Date().getFullYear()} {biz.name} · {biz.address.full}
           </p>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link href="/privacy" className="inline-flex min-h-10 items-center hover:text-fg">
@@ -115,7 +129,9 @@ export function Footer() {
           </div>
         </div>
         <p className="mt-4 text-xs text-faint">
-          Concept website: Fieldstone &amp; Fern is a fictional business created by {agencyName} to demonstrate a landscaping website. Reviews, projects and people are illustrative.
+          {biz.preview
+            ? `A preview homepage made for ${biz.name} by ${agencyName}. Sample reviews and projects are illustrative.`
+            : `Concept website: Fieldstone & Fern is a fictional business created by ${agencyName} to demonstrate a landscaping website. Reviews, projects and people are illustrative.`}
         </p>
       </div>
     </footer>

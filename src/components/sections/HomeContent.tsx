@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { PageShell, JsonLd, SectionHead } from "@/components/ui/Page";
+import { PageShell, SectionHead } from "@/components/ui/Page";
 import { Photo } from "@/components/ui/Photo";
 import { Button, Arrow } from "@/components/ui/Button";
 import { Counter, Parallax, Reveal, ScrubWords } from "@/components/ui/Reveal";
@@ -15,22 +15,37 @@ import { ProcessStack } from "@/components/sections/ProcessStack";
 import { ServiceAreaMap } from "@/components/sections/ServiceAreaMap";
 import { CityMarquee, CtaBand, FaqList, ReviewsWall } from "@/components/sections/Blocks";
 import { faqs, stats } from "@/content/misc";
-import { site } from "@/content/site";
-import { buildMetadata } from "@/lib/seo";
-import { faqSchema, graph, webPageSchema } from "@/lib/schema";
-
-const title = `${site.legalName} | Landscaping & Lawn Care in Southlake, TX`;
-const description =
-  "Same-crew weekly lawn care, landscape design, patios, outdoor kitchens and lighting for Southlake, Keller, Colleyville, Grapevine, Flower Mound and Fort Worth. 4.9★ from 312 reviews.";
-
-export const metadata: Metadata = buildMetadata({ title, description, path: "/", absoluteTitle: true, eyebrow: "Southlake · Fort Worth, TX", image: "estate-lawn-hedges" });
+import { PreviewMap } from "@/components/preview/PreviewMap";
+import { defaultBiz } from "@/lib/biz";
+import { openDays, type Biz } from "@/lib/biz-core";
 
 const homeFaqs = faqs.filter((_, i) => [0, 1, 4, 5, 8].includes(i));
 
-export default function Home() {
+export { homeFaqs };
+
+type Stat = { value: number; suffix: string; label: string; decimals?: number };
+
+/** A preview states only what's true of the real business: its rating and opening days. */
+function previewStats(biz: Biz): Stat[] {
+  const days = openDays(biz);
+  return [
+    ...(biz.rating ? [{ value: biz.rating.value, suffix: "★", label: `from ${biz.rating.count} Google reviews`, decimals: 1 }] : []),
+    ...(days ? [{ value: days, suffix: "", label: "days a week we pick up" }] : []),
+    { value: 1, suffix: "", label: "crew, every visit" },
+    { value: 1, suffix: "-yr", label: "plant warranty" },
+  ];
+}
+
+/**
+ * The homepage sections. The concept site renders them as they are; a personalised preview
+ * (/for/<token>) passes a real business: its name, phone, hours, rating and a map of its address
+ * replace Fieldstone & Fern's, and the Southlake service-area map and city ticker step aside.
+ */
+export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; children?: ReactNode }) {
+  const statList = biz.preview ? previewStats(biz) : stats;
   return (
     <PageShell>
-      <JsonLd data={graph(webPageSchema({ path: "/", name: title, description }), faqSchema(homeFaqs))} />
+      {children}
       <Hero />
 
       {/* Statement */}
@@ -41,7 +56,7 @@ export default function Home() {
         <div className="wrap relative grid gap-16 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <Reveal as="p" className="t-eyebrow text-accent">
-              Since 2009 · Southlake, Texas
+              {biz.preview ? biz.area : "Since 2009 · Southlake, Texas"}
             </Reveal>
             <ScrubWords
               className="font-display mt-8 text-[clamp(1.75rem,3.6vw,3.6rem)] leading-[1.12] tracking-[-0.025em]"
@@ -70,7 +85,7 @@ export default function Home() {
 
         <div className="wrap relative mt-24">
           <Reveal as="dl" stagger={0.08} className="grid grid-cols-2 gap-y-10 border-t border-line pt-10 lg:grid-cols-4">
-            {stats.map((s) => (
+            {statList.map((s) => (
               <div key={s.label} className="pr-6">
                 <dt className="sr-only">{s.label}</dt>
                 <dd>
@@ -227,28 +242,34 @@ export default function Home() {
       </section>
 
       <section className="theme-cream py-24 sm:py-32">
-        <ReviewsWall />
+        <ReviewsWall biz={biz} />
       </section>
 
-      {/* Service area */}
-      <section className="theme-sand pt-24 sm:pt-32" aria-labelledby="area-title">
-        <div className="wrap">
-          <SectionHead
-            id="area-title"
-            eyebrow="Service area"
-            title={
-              <>
-                Six cities, <span className="t-italic">daily</span> routes.
-              </>
-            }
-            aside="Our yard is in Southlake. Crews are on route across northeast Tarrant and southern Denton County every weekday."
-          />
-          <div className="mt-14 pb-20">
-            <ServiceAreaMap />
-          </div>
-        </div>
-        <CityMarquee />
-      </section>
+      {biz.preview ? (
+        <PreviewMap biz={biz} />
+      ) : (
+        <>
+          {/* Service area */}
+          <section className="theme-sand pt-24 sm:pt-32" aria-labelledby="area-title">
+            <div className="wrap">
+              <SectionHead
+                id="area-title"
+                eyebrow="Service area"
+                title={
+                  <>
+                    Six cities, <span className="t-italic">daily</span> routes.
+                  </>
+                }
+                aside="Our yard is in Southlake. Crews are on route across northeast Tarrant and southern Denton County every weekday."
+              />
+              <div className="mt-14 pb-20">
+                <ServiceAreaMap />
+              </div>
+            </div>
+            <CityMarquee />
+          </section>
+        </>
+      )}
 
       {/* FAQ */}
       <section className="theme-cream py-24 sm:py-32" aria-labelledby="faq-title">
@@ -268,7 +289,7 @@ export default function Home() {
         </div>
       </section>
 
-      <CtaBand />
+      <CtaBand biz={biz} />
     </PageShell>
   );
 }
