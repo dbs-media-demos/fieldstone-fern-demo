@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Photo } from "@/components/ui/Photo";
 import { Button } from "@/components/ui/Button";
 import { OpenBadge } from "@/components/ui/OpenBadge";
+import { HeroGrass } from "@/components/fx/HeroGrass";
 import { useBiz } from "@/components/preview/BizContext";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 
@@ -12,11 +13,14 @@ import { gsap, useGSAP, prefersReducedMotion } from "@/lib/gsap";
  * Home hero. A golden-hour video sits in an arched window between two lines of
  * display type; scrolling opens the arch to full-bleed while the lines drift apart.
  * The intro is CSS-only (poster image is the LCP element); the scroll scene is JS.
+ * A fringe of wild grass grows in along the bottom, parts around the pointer, and the
+ * same scroll rolls a mower across it: "Grown" on arrival, "Kept" as you scroll.
  */
 export function Hero() {
   const biz = useBiz();
   const root = useRef<HTMLElement>(null);
   const [playVideo, setPlayVideo] = useState(false);
+  const mow = useRef({ p: 0 });
 
   useEffect(() => {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -55,7 +59,8 @@ export function Hero() {
         .fromTo(".hero-l1", { xPercent: 0, yPercent: 0 }, { xPercent: -8, yPercent: -40 }, 0)
         .fromTo(".hero-l2", { xPercent: 0, yPercent: 0 }, { xPercent: 8, yPercent: 30 }, 0)
         .fromTo(".hero-shade", { opacity: 0 }, { opacity: 0.35 }, 0)
-        .fromTo(".hero-foot", { opacity: 1, y: 0 }, { opacity: 0, y: 40 }, 0);
+        .fromTo(".hero-foot", { opacity: 1, y: 0 }, { opacity: 0, y: 40 }, 0)
+        .fromTo(mow.current, { p: 0 }, { p: 1, duration: 0.95 }, 0.05);
     },
     { scope: root },
   );
@@ -86,6 +91,9 @@ export function Hero() {
           <div className="absolute inset-0 bg-gradient-to-t from-forest/70 via-transparent to-forest/10" />
           <div className="hero-shade absolute inset-0 bg-forest opacity-0" />
         </div>
+
+        {/* Phones: the grass stands on the sticky call bar, so the mower stays in view */}
+        <HeroGrass mow={mow} className="pointer-events-none absolute inset-x-0 bottom-[4.4rem] h-[40%] w-full lg:bottom-0 lg:h-[44%]" />
 
         <div className="wrap relative flex h-full flex-col justify-between pb-36 pt-[calc(var(--header-h)+1.5rem)] lg:pb-20">
           <h1 className="relative flex flex-1 flex-col justify-between pb-8">

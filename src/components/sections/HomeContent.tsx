@@ -7,6 +7,7 @@ import { Counter, Parallax, Reveal, ScrubWords } from "@/components/ui/Reveal";
 import { BeforeAfter } from "@/components/ui/BeforeAfter";
 import { Hero } from "@/components/sections/Hero";
 import { ServicesList } from "@/components/sections/ServicesList";
+import { WorkModes } from "@/components/sections/WorkModes";
 import { SeasonsScroll } from "@/components/sections/SeasonsScroll";
 import { ProjectsRail } from "@/components/sections/ProjectsRail";
 import { NightReveal } from "@/components/sections/NightReveal";
@@ -16,6 +17,7 @@ import { ServiceAreaMap } from "@/components/sections/ServiceAreaMap";
 import { CityMarquee, CtaBand, FaqList, ReviewsWall } from "@/components/sections/Blocks";
 import { faqs, stats } from "@/content/misc";
 import { PreviewMap } from "@/components/preview/PreviewMap";
+import { PlantingBed } from "@/components/fx/PlantingBed";
 import { defaultBiz } from "@/lib/biz";
 import { openDays, type Biz } from "@/lib/biz-core";
 
@@ -83,7 +85,8 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           </div>
         </div>
 
-        <div className="wrap relative mt-24">
+        <div className="wrap relative mt-36 sm:mt-40 lg:mt-24">
+          <PlantingBed className="absolute bottom-full left-[var(--gutter)] aspect-[10/3] w-[calc(100%-2*var(--gutter))] lg:w-[58%]" />
           <Reveal as="dl" stagger={0.08} className="grid grid-cols-2 gap-y-10 border-t border-line pt-10 lg:grid-cols-4">
             {statList.map((s) => (
               <div key={s.label} className="pr-6">
@@ -110,41 +113,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
             }
             aside="Most of our customers start with one and end up with both: a patio built by our design team, kept perfect by the weekly crew that comes with it."
           />
-          <div className="mt-14 grid gap-5 md:grid-cols-2">
-            {[
-              {
-                href: "/lawn-plans",
-                img: "crew-mowing",
-                k: "Recurring",
-                t: "Weekly lawn care",
-                d: "Same crew, same day, a text before we arrive. From $45 a visit.",
-              },
-              {
-                href: "/services/landscape-design",
-                img: "patio-firepit-house",
-                k: "Design & build",
-                t: "Landscape projects",
-                d: "Consult, 3D design, install, care plan. Patios, kitchens, lighting, planting.",
-              },
-            ].map((c, i) => (
-              <Reveal key={c.href} delay={i * 0.1}>
-                <Link href={c.href} data-cursor="Explore" className="group relative block aspect-[4/5] overflow-hidden rounded-[2rem] sm:aspect-[5/4]">
-                  <Photo slug={c.img} sizes="(min-width: 768px) 50vw, 100vw" className="transition-transform duration-[1.6s] ease-[var(--ease-out-expo)] group-hover:scale-[1.06]" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-forest/90 via-forest/20 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-7 text-cream sm:p-9">
-                    <div>
-                      <p className="t-eyebrow text-lantern">{c.k}</p>
-                      <h3 className="t-h3 mt-3">{c.t}</h3>
-                      <p className="mt-3 max-w-sm text-cream/80">{c.d}</p>
-                    </div>
-                    <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cream text-forest transition-transform duration-500 group-hover:rotate-[-45deg]">
-                      <Arrow />
-                    </span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
+          <WorkModes />
         </div>
       </section>
 

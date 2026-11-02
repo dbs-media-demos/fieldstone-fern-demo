@@ -14,6 +14,10 @@
   Projects (filterable gallery) + 6 case studies · Lawn plans & pricing · Service areas + 6 city pages (Southlake, Keller, Colleyville, Grapevine, Fort Worth, Flower Mound) ·
   About · Reviews · FAQ · Free estimate (4-step form) · Contact · Privacy · 404. Plus /api/og, sitemap.xml, robots.txt, manifest.
 - Signature features:
+  - Hero lawn: wild grass grows in along the bottom on load, sways and parts around the cursor or a finger; scrolling rolls a mower across and cuts it into a striped lawn (scroll back and it grows again).
+  - Planting bed: under the statement, ferns (with fiddlehead curls), grasses and coneflowers grow out of the stats line as you scroll, sway, and lean away from the cursor.
+  - Two ways we work: the weekly card's lawn is mowed into stripes in a serpentine while the day marker slides to Thursday; the projects card draws itself as a patio blueprint, then opens from the fire pit into the finished build. Cards tilt to the cursor.
+  - Services list: each service has a line glyph that acts out the job on hover (or when the row is centred on a phone), a mower-stripe sweep behind the live row, and row edges cut in by a trimmer head as you scroll.
   - Seasons scroll: pinned scene through Spring → Winter; photo wipes open from the season dial, palette shifts, particles change (petals, heat motes, falling leaves, snow + frost vignette), each season lists its services.
   - Lawn-plan builder: yard-size slider grows a top-down yard illustration; services toggle mowing stripes (with a mower), edging, fertilizer granules, weeds and hedges; weekly/bi-weekly; animated monthly price → pre-fills the estimate form.
   - Day-to-night lighting reveal: one real dusk photo; the yard starts dark and 14 fixtures switch on one by one as you scroll (or drag the slider), with a live clock and fixture counter.

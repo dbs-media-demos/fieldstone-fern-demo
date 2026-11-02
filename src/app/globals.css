@@ -377,6 +377,17 @@ html.lenis body {
   to { transform: rotate(4deg) translate3d(2%, 3%, 0) scale(1.04); }
 }
 
+/* Statement planting bed: each plant sways on its own clock */
+.bed-sway {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bed-sway var(--sway-d, 6s) ease-in-out var(--sway-delay, 0s) infinite alternate;
+}
+@keyframes bed-sway {
+  from { transform: rotate(-1.6deg); }
+  to { transform: rotate(1.8deg); }
+}
+
 /* Marquee */
 @keyframes marquee {
   from { transform: translate3d(0, 0, 0); }
@@ -639,4 +650,143 @@ input[type="range"].yard-range::-moz-range-thumb {
 }
 .hero-still {
   animation: still-zoom 14s ease-out 0.6s both;
+}
+
+/* Service glyphs (.sg-*): a still drawing at rest, acting out the job while the row is live */
+.sg-blade,
+.sg-paver,
+.sg-pop,
+.sg-leaf,
+.sg-neat,
+.sg-shaggy,
+.sg-shears {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.sg-pop,
+.sg-leaf,
+.sg-neat,
+.sg-shaggy,
+.sg-shears {
+  transform-origin: 50% 50%;
+}
+.sg-deck,
+.sg-shaggy,
+.sg-shears {
+  opacity: 0;
+}
+.sg-draw {
+  stroke-dasharray: 1;
+}
+.sg-glow {
+  opacity: 0.35;
+}
+.is-live .sg-blade {
+  animation: sg-mow 2.4s var(--ease-organic) calc(0.1s + var(--i) * 0.16s) infinite;
+}
+.is-live .sg-deck {
+  animation: sg-deck 2.4s linear infinite;
+}
+.is-live .sg-draw {
+  animation: sg-draw 2.8s var(--ease-in-out-quart) infinite;
+}
+.is-live .sg-pop {
+  animation: sg-pop 2.8s var(--ease-out-expo) calc(var(--i) * 0.25s) infinite;
+}
+.is-live .sg-paver {
+  animation: sg-lay 2.8s var(--ease-out-expo) calc(var(--i) * 0.12s) infinite;
+}
+.is-live .sg-glow {
+  animation: sg-flicker 2.4s linear infinite;
+}
+.is-live .sg-spray {
+  animation: sg-spray 0.7s linear infinite;
+}
+.is-live .sg-leaf {
+  animation: sg-blow 2.2s ease-in calc(var(--i) * 0.3s) infinite;
+}
+.is-live .sg-shaggy {
+  animation: sg-shaggy 2.6s ease-in-out infinite;
+}
+.is-live .sg-neat {
+  animation: sg-neat 2.6s var(--ease-out-expo) infinite;
+}
+.is-live .sg-shears {
+  animation: sg-snip 2.6s ease-in-out infinite;
+}
+@keyframes sg-mow {
+  0% { transform: scaleY(1); }
+  6%, 70% { transform: scaleY(0.42); }
+  100% { transform: scaleY(1); }
+}
+@keyframes sg-deck {
+  0% { opacity: 0; transform: translateX(0); }
+  8% { opacity: 1; }
+  45% { opacity: 1; transform: translateX(40px); }
+  52%, 100% { opacity: 0; transform: translateX(40px); }
+}
+@keyframes sg-draw {
+  0% { stroke-dashoffset: 1; }
+  50%, 88% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -1; }
+}
+@keyframes sg-pop {
+  0%, 35% { transform: scale(0); }
+  50% { transform: scale(1.18); }
+  60%, 100% { transform: scale(1); }
+}
+@keyframes sg-lay {
+  0% { opacity: 0; transform: translateY(-9px); }
+  22%, 84% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+@keyframes sg-flicker {
+  0% { opacity: 0.35; }
+  6% { opacity: 1; }
+  9% { opacity: 0.5; }
+  13%, 100% { opacity: 1; }
+}
+@keyframes sg-spray {
+  to { stroke-dashoffset: -11; }
+}
+@keyframes sg-blow {
+  0%, 10% { opacity: 1; transform: none; }
+  75% { opacity: 0; transform: translate(12px, -18px) rotate(150deg); }
+  100% { opacity: 0; transform: translate(12px, -18px) rotate(150deg); }
+}
+@keyframes sg-shaggy {
+  0%, 12% { opacity: 1; transform: scale(1); }
+  42%, 100% { opacity: 0; transform: scale(0.82); }
+}
+@keyframes sg-neat {
+  0%, 28% { opacity: 0.25; transform: scale(0.7); }
+  48%, 100% { opacity: 1; transform: scale(1); }
+}
+@keyframes sg-snip {
+  0%, 8% { opacity: 0; transform: rotate(0); }
+  14% { opacity: 1; }
+  20% { transform: rotate(24deg); }
+  26% { transform: rotate(0); }
+  32% { transform: rotate(24deg); }
+  40% { opacity: 1; transform: rotate(0); }
+  50%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-live [class*="sg-"] {
+    animation: none !important;
+  }
+}
+
+/* Services: a live row gets a mower pass, stripes sweeping in behind it */
+.svc-sweep {
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--moss) 6%, transparent) 0 56px,
+    color-mix(in oklab, var(--moss) 12%, transparent) 56px 112px
+  );
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.9s var(--ease-out-expo);
+}
+.is-live .svc-sweep {
+  clip-path: inset(0 0 0 0);
 }
