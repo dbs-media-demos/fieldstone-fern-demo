@@ -790,3 +790,32 @@ input[type="range"].yard-range::-moz-range-thumb {
 .is-live .svc-sweep {
   clip-path: inset(0 0 0 0);
 }
+
+/* Projects rail: stepping stones laid one by one as the rail moves */
+.rail-stone {
+  transform: rotate(var(--st-r, 0deg));
+  transition:
+    transform 0.7s var(--ease-out-expo),
+    opacity 0.5s;
+}
+.rail-path[data-anim] .rail-stone:not(.is-laid) {
+  opacity: 0;
+  transform: translateY(-18px) rotate(calc(var(--st-r, 0deg) - 14deg)) scale(0.7);
+}
+
+/* Before/after seedling: leaves unfold and the bloom opens as the slider moves to "after" */
+.ba-leaf,
+.ba-bloom {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;
+  transform: scale(0);
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.ba-bloom {
+  transform-origin: 50% 50%;
+  transform: scale(0) rotate(-90deg);
+}
+.ba-leaf.is-on,
+.ba-bloom.is-on {
+  transform: none;
+}

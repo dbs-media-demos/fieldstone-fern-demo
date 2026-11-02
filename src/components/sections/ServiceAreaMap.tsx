@@ -1,16 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { cities } from "@/content/cities";
 import { Arrow } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
+import { gsap, prefersReducedMotion } from "@/lib/gsap";
 
-/** Stylized map of the northeast Tarrant County service area (not to exact scale). */
+const YARD = cities.find((c) => c.slug === "southlake")!.map;
+
+/** Gentle curve from the yard to a city, bowed to one side like a real drive. */
+function routeTo(to: { x: number; y: number }) {
+  const mx = (YARD.x + to.x) / 2;
+  const my = (YARD.y + to.y) / 2;
+  const dx = to.x - YARD.x;
+  const dy = to.y - YARD.y;
+  return `M${YARD.x} ${YARD.y}Q${(mx - dy * 0.22).toFixed(1)} ${(my + dx * 0.22).toFixed(1)} ${to.x} ${to.y}`;
+}
+
+/**
+ * Stylized map of the northeast Tarrant County service area (not to exact scale).
+ * Pick a city and a crew truck towing a mower trailer drives there from the Southlake
+ * yard, drawing its route as it goes.
+ */
 export function ServiceAreaMap() {
   const [active, setActive] = useState("southlake");
   const city = cities.find((c) => c.slug === active)!;
+  const route = useRef<SVGPathElement>(null);
+  const truck = useRef<SVGGElement>(null);
+
+  useEffect(() => {
+    const path = route.current;
+    const t = truck.current;
+    if (!path || !t) return;
+    const len = path.getTotalLength();
+    const o = { p: 0 };
+    const place = () => {
+      const at = path.getPointAtLength(o.p * len);
+      const ahead = path.getPointAtLength(Math.min(len, o.p * len + 1));
+      const behind = path.getPointAtLength(Math.max(0, o.p * len - 1));
+      const angle = (Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI;
+      t.setAttribute("transform", `translate(${at.x.toFixed(1)} ${at.y.toFixed(1)}) rotate(${len > 2 ? angle.toFixed(1) : 0})`);
+      path.style.strokeDashoffset = String(1 - o.p);
+    };
+    if (prefersReducedMotion() || len < 2) {
+      o.p = 1;
+      place();
+      return;
+    }
+    const tween = gsap.to(o, { p: 1, duration: 1.5, ease: "power2.inOut", onUpdate: place, onStart: place });
+    return () => {
+      tween.kill();
+    };
+  }, [active]);
 
   return (
     <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
@@ -69,6 +112,27 @@ export function ServiceAreaMap() {
             {/* service radius */}
             <circle cx="268" cy="112" r="200" fill="none" stroke="#e8b45a" strokeOpacity="0.25" strokeDasharray="2 6" />
             <circle cx="268" cy="112" r="90" fill="url(#map-glow)" />
+
+            {/* today's route + crew truck */}
+            <path
+              ref={route}
+              d={routeTo(city.map)}
+              pathLength={1}
+              fill="none"
+              stroke="#e8b45a"
+              strokeWidth="1.6"
+              strokeDasharray="1"
+              strokeLinecap="round"
+              style={{ strokeDashoffset: 0 }}
+            />
+            <g ref={truck} transform={`translate(${city.map.x} ${city.map.y})`} aria-hidden>
+              <g>
+                <rect x="-17" y="-2.6" width="7" height="5.2" rx="1" fill="#6e7f4e" />
+                <path d="M-10 0H-7" stroke="#f3ede1" strokeWidth="1" />
+                <rect x="-7" y="-3.4" width="12" height="6.8" rx="1.6" fill="#f3ede1" />
+                <rect x="1.6" y="-2.6" width="2.6" height="5.2" rx="0.6" fill="#16241c" fillOpacity="0.55" />
+              </g>
+            </g>
 
             {cities.map((c) => {
               const isActive = c.slug === active;

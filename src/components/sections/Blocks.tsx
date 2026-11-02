@@ -7,6 +7,8 @@ import { reviews, type Review } from "@/content/misc";
 import { site } from "@/content/site";
 import { defaultBiz } from "@/lib/biz";
 import { telOf, type Biz } from "@/lib/biz-core";
+import { RakedLeaves } from "@/components/fx/RakedLeaves";
+import { HedgeTrim } from "@/components/fx/HedgeTrim";
 
 export function Stars({ n = 5, className }: { n?: number; className?: string }) {
   return (
@@ -58,7 +60,7 @@ export function ReviewCard({ r, className, area }: { r: Review; className?: stri
   );
 }
 
-/** Rating summary + two opposing marquees of review cards. */
+/** Rating summary + two opposing marquees of review cards; leaves get raked up beside the link. */
 export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
   // Previews keep the sample reviews, placed in the business's area and labelled as samples
   const area = biz.preview ? biz.area : undefined;
@@ -98,15 +100,17 @@ export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
           </div>
         ))}
       </div>
-      <div className="wrap mt-10">
+      <div className="wrap mt-10 flex items-end justify-between gap-6">
         <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium">
           Read all reviews
         </Link>
+        <RakedLeaves className="h-auto w-40 shrink-0 sm:w-60" />
       </div>
     </div>
   );
 }
 
+/** FAQ accordion. Opening a question turns the plus into a soil line with a seedling sprouting from it. */
 export function FaqList({ items, className }: { items: { q: string; a: string }[]; className?: string }) {
   return (
     <div className={clsx("border-t border-line", className)}>
@@ -120,6 +124,17 @@ export function FaqList({ items, className }: { items: { q: string; a: string }[
             >
               <span className="absolute h-px w-3.5 bg-current" />
               <span className="absolute h-3.5 w-px bg-current transition-transform duration-500 group-open:rotate-90" />
+              <svg
+                viewBox="0 0 16 14"
+                className="absolute bottom-1/2 left-1/2 h-3.5 w-4 -translate-x-1/2 origin-bottom scale-0 transition-transform duration-500 ease-[var(--ease-out-expo)] group-open:scale-100 group-open:delay-200"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.3}
+                strokeLinecap="round"
+              >
+                <path d="M8 14V6" />
+                <path d="M8 8C6 4 3 4 2 5C3 8 6 9 8 8ZM8 6C10 2 13 2 14 3C13 6 10 7 8 6Z" fill="currentColor" stroke="none" />
+              </svg>
             </span>
           </summary>
           <div className="faq-body">
@@ -131,7 +146,7 @@ export function FaqList({ items, className }: { items: { q: string; a: string }[
   );
 }
 
-/** Closing call-to-action band with a big parallax photo. */
+/** Closing call-to-action band with a big parallax photo; a hedge along its foot gets trimmed as it arrives. */
 export function CtaBand({
   title = (
     <>
@@ -149,12 +164,16 @@ export function CtaBand({
 }) {
   return (
     <section className="theme-forest relative isolate overflow-hidden">
-      <Parallax className="absolute inset-0 -z-10" amount={16} reveal="none">
-        <div className="absolute inset-0">
-          <Photo slug={image} sizes="100vw" decorative />
-        </div>
-      </Parallax>
+      {/* wrapper holds the position: Parallax's own `relative` would override `absolute` */}
+      <div className="absolute inset-0 -z-10">
+        <Parallax className="h-full w-full" amount={16} reveal="none">
+          <div className="absolute inset-0">
+            <Photo slug={image} sizes="100vw" decorative />
+          </div>
+        </Parallax>
+      </div>
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-forest/90 via-forest/60 to-forest/20" />
+      <HedgeTrim className="absolute inset-x-0 bottom-0 -z-10 h-12 sm:h-16" />
       <div className="wrap flex min-h-[78svh] flex-col justify-center py-24">
         <SplitReveal className="t-h1 max-w-[12ch] text-cream">{title}</SplitReveal>
         <Reveal className="mt-8 max-w-md" delay={0.15}>

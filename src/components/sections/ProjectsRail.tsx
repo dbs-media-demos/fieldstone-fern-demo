@@ -8,10 +8,20 @@ import { projects, categories } from "@/content/projects";
 import { gsap, useGSAP, prefersReducedMotion, isTouch } from "@/lib/gsap";
 import { useBiz } from "@/components/preview/BizContext";
 
+// Flagstone outlines for the stepping-stone path (60 × 34 box)
+const STONES = [
+  "M6 10Q4 4 14 3L40 2Q52 2 55 10L57 22Q56 31 44 31L14 32Q4 31 4 22Z",
+  "M4 14Q6 4 18 4L46 6Q56 8 56 18Q55 29 42 30L16 31Q5 30 4 20Z",
+  "M8 6L36 3Q50 3 54 12Q58 24 48 30L20 32Q6 32 4 22Q3 12 8 6Z",
+  "M5 12Q8 3 22 4L44 3Q55 5 54 16L52 26Q49 32 36 31L12 30Q3 28 5 12Z",
+];
+const PATH_LEN = 14;
+
 /**
  * Horizontal project gallery. On desktop the section pins and the rail slides
  * sideways as you scroll; each card's photo counter-drifts for depth.
  * On touch it's a native swipeable rail with scroll-snap.
+ * Under the rail, a stepping-stone path is laid stone by stone as you move through it.
  */
 export function ProjectsRail() {
   const biz = useBiz();
@@ -21,7 +31,18 @@ export function ProjectsRail() {
   useGSAP(
     () => {
       const el = track.current;
-      if (!el || prefersReducedMotion() || isTouch()) return;
+      if (!el || prefersReducedMotion()) return;
+      const stones = gsap.utils.toArray<HTMLElement>(".rail-stone", root.current);
+      root.current?.querySelector(".rail-path")?.setAttribute("data-anim", "");
+      const lay = (p: number) => stones.forEach((st, i) => st.classList.toggle("is-laid", i <= Math.round(p * (PATH_LEN - 1))));
+      lay(0);
+
+      if (isTouch()) {
+        const onScroll = () => lay(el.scrollLeft / Math.max(1, el.scrollWidth - el.clientWidth));
+        el.addEventListener("scroll", onScroll, { passive: true });
+        return () => el.removeEventListener("scroll", onScroll);
+      }
+
       const distance = () => el.scrollWidth - window.innerWidth;
       const tween = gsap.to(el, {
         x: () => -distance(),
@@ -34,6 +55,7 @@ export function ProjectsRail() {
           scrub: 0.8,
           invalidateOnRefresh: true,
           anticipatePin: 1,
+          onUpdate: (self) => lay(self.progress),
         },
       });
       gsap.utils.toArray<HTMLElement>(".rail-img").forEach((img) => {
@@ -120,6 +142,19 @@ export function ProjectsRail() {
             </Link>
             <div className="w-px shrink-0" aria-hidden />
           </div>
+        </div>
+
+        <div aria-hidden className="rail-path pointer-events-none absolute inset-x-[var(--gutter)] bottom-6 flex items-end justify-between lg:bottom-3">
+          {Array.from({ length: PATH_LEN }, (_, i) => (
+            <svg
+              key={i}
+              viewBox="0 0 60 34"
+              className="rail-stone h-auto w-[clamp(18px,3.6vw,48px)]"
+              style={{ ["--st-r" as string]: `${((i * 37) % 13) - 6}deg`, marginBottom: i % 2 ? 6 : 0 }}
+            >
+              <path d={STONES[(i * 3) % STONES.length]} fill={i % 3 ? "#d6c9ad" : "#c9b995"} stroke="#16241c" strokeOpacity={0.14} />
+            </svg>
+          ))}
         </div>
       </section>
     </div>

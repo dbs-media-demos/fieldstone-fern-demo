@@ -4,10 +4,10 @@ import { PageShell, SectionHead } from "@/components/ui/Page";
 import { Photo } from "@/components/ui/Photo";
 import { Button, Arrow } from "@/components/ui/Button";
 import { Counter, Parallax, Reveal, ScrubWords } from "@/components/ui/Reveal";
-import { BeforeAfter } from "@/components/ui/BeforeAfter";
 import { Hero } from "@/components/sections/Hero";
 import { ServicesList } from "@/components/sections/ServicesList";
 import { WorkModes } from "@/components/sections/WorkModes";
+import { BeforeAfterGrow } from "@/components/sections/BeforeAfterGrow";
 import { SeasonsScroll } from "@/components/sections/SeasonsScroll";
 import { ProjectsRail } from "@/components/sections/ProjectsRail";
 import { NightReveal } from "@/components/sections/NightReveal";
@@ -140,32 +140,7 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
 
       <ProjectsRail />
 
-      {/* Before / after */}
-      <section className="theme-sand py-24 sm:py-32" aria-labelledby="ba-title">
-        <div className="wrap grid gap-12 lg:grid-cols-12 lg:items-center">
-          <div className="lg:col-span-4">
-            <Reveal as="p" className="t-eyebrow text-accent">
-              Before · After
-            </Reveal>
-            <h2 id="ba-title" className="t-h2 mt-5">
-              Same yard. <span className="t-italic">Six</span> weeks.
-            </h2>
-            <Reveal className="mt-6 space-y-4 text-muted" delay={0.1}>
-              <p>
-                The Harmons in Timarron had a fenced rectangle of tired Bermuda. Now they have a flagstone courtyard with a fire pit that&rsquo;s lit
-                every evening from October to March.
-              </p>
-              <p className="text-sm">Drag the handle, or focus it and use your arrow keys.</p>
-              <Link href="/projects/southlake-courtyard-patio" className="inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium text-fg">
-                See the project <Arrow />
-              </Link>
-            </Reveal>
-          </div>
-          <div className="lg:col-span-8">
-            <BeforeAfter before="before-empty-yard" after="patio-firepit-house" label="Timarron courtyard" className="aspect-[4/3] sm:aspect-[16/10]" />
-          </div>
-        </div>
-      </section>
+      <BeforeAfterGrow />
 
       <NightReveal />
 

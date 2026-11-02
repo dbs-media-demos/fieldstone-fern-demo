@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { Photo } from "@/components/ui/Photo";
 import { gsap, useGSAP, prefersReducedMotion, belowFold } from "@/lib/gsap";
@@ -8,6 +8,7 @@ import { gsap, useGSAP, prefersReducedMotion, belowFold } from "@/lib/gsap";
 /**
  * Before/after slider. Drag, click, or use the arrow keys (it's an ARIA slider).
  * On first view the handle sweeps once to hint that it moves.
+ * `onChange` reports the handle position (0–100, share of "before" shown).
  */
 export function BeforeAfter({
   before,
@@ -15,16 +16,20 @@ export function BeforeAfter({
   label,
   className,
   sizes = "(min-width: 1024px) 60vw, 100vw",
+  onChange,
 }: {
   before: string;
   after: string;
   label: string;
   className?: string;
   sizes?: string;
+  onChange?: (pos: number) => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState(50);
   const dragging = useRef(false);
+
+  useEffect(() => onChange?.(pos), [pos, onChange]);
 
   const setFromX = (clientX: number) => {
     const r = root.current!.getBoundingClientRect();
