@@ -69,7 +69,7 @@ export function PageHero({
     </div>
   );
   return (
-    <section className={clsx("theme-forest relative isolate flex items-end overflow-hidden", tall ? "min-h-[100svh]" : "min-h-[82svh]")}>
+    <section className={clsx("theme-forest relative isolate flex items-end overflow-hidden", tall ? "min-h-[100svh] phone:!min-h-[72svh]" : "min-h-[82svh] phone:!min-h-[60svh]")}>
       <div className="anim-arch absolute inset-0 -z-10 origin-bottom">
         {vtName ? (
           <ViewTransition name={vtName} share="morph" default="none">
@@ -80,7 +80,7 @@ export function PageHero({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/45 to-forest/25" />
       </div>
-      <div className="wrap relative pb-14 pt-[calc(var(--header-h)+4rem)] sm:pb-20">
+      <div className="wrap relative pb-14 pt-[calc(var(--header-h)+4rem)] sm:pb-20 phone:!pb-8 phone:!pt-[calc(var(--header-h)+1.5rem)]">
         <Breadcrumbs items={crumbs} className="anim-fade mb-8 text-cream" />
         <p className="t-eyebrow anim-fade text-lantern" style={{ ["--d" as string]: "0.1s" }}>
           {eyebrow}
@@ -118,7 +118,7 @@ export function SectionHead({
   id?: string;
 }) {
   return (
-    <div className={clsx("grid gap-8 lg:grid-cols-12 lg:items-end", className)}>
+    <div className={clsx("grid gap-8 lg:grid-cols-12 lg:items-end phone:!grid-cols-1 phone:!gap-2", className)}>
       <div className="lg:col-span-8">
         <Reveal as="p" className="t-eyebrow text-accent">
           {eyebrow}

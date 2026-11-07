@@ -90,7 +90,7 @@ export function WorkModes() {
   );
 
   return (
-    <div ref={root} className="mt-14 grid gap-5 md:grid-cols-2">
+    <div ref={root} className="mt-14 grid gap-5 md:grid-cols-2 phone:!flex phone-swipe [--card:80vw]">
       <Card
         i={0}
         href="/lawn-plans"
@@ -119,18 +119,18 @@ function Card({ i, href, img, k, t, d, overlay }: { i: number; href: string; img
       <Link
         href={href}
         data-cursor="Explore"
-        className="wm-card group relative block aspect-[4/5] overflow-hidden rounded-[2rem] [transform-style:preserve-3d] sm:aspect-[5/4]"
+        className="wm-card group relative block aspect-[4/5] overflow-hidden rounded-[2rem] [transform-style:preserve-3d] sm:aspect-[5/4] phone:!aspect-[3/2] phone:rounded-[1.25rem]"
       >
-        <Photo slug={img} sizes="(min-width: 768px) 50vw, 100vw" className="transition-transform duration-[1.6s] ease-[var(--ease-out-expo)] group-hover:scale-[1.06]" />
+        <Photo slug={img} sizes="(min-width: 768px) 50vw, 80vw" className="transition-transform duration-[1.6s] ease-[var(--ease-out-expo)] group-hover:scale-[1.06]" />
         {overlay}
         <div className="absolute inset-0 bg-gradient-to-t from-forest/90 via-forest/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-7 text-cream sm:p-9">
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-7 text-cream sm:p-9 phone:!gap-2 phone:!p-3.5">
           <div>
             <p className="t-eyebrow text-lantern">{k}</p>
-            <h3 className="t-h3 mt-3">{t}</h3>
-            <p className="mt-3 max-w-sm text-cream/80">{d}</p>
+            <h3 className="t-h3 mt-3 phone:!mt-1">{t}</h3>
+            <p className="mt-3 max-w-sm text-cream/80 phone:!mt-1 phone:!text-[0.85rem] phone:!leading-snug">{d}</p>
           </div>
-          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cream text-forest transition-transform duration-500 group-hover:rotate-[-45deg]">
+          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cream text-forest transition-transform duration-500 group-hover:rotate-[-45deg] phone:hidden">
             <Arrow />
           </span>
         </div>
@@ -154,13 +154,13 @@ function MowedLawn() {
           ))}
         </div>
       </div>
-      <div aria-hidden className="pointer-events-none absolute left-7 top-7 sm:left-9 sm:top-9">
+      <div aria-hidden className="pointer-events-none absolute left-7 top-7 sm:left-9 sm:top-9 phone:!left-3.5 phone:!top-3.5">
         <div className="relative flex gap-1.5">
           <span className="wm-marker absolute left-0 top-0 h-8 w-8 rounded-full bg-lantern" />
           {DAYS.map((day, i) => (
             <span
               key={i}
-              className="wm-day relative flex h-8 w-8 items-center justify-center rounded-full border border-cream/45 font-mono text-[11px] text-cream backdrop-blur-[2px]"
+              className="wm-day relative flex h-8 w-8 items-center justify-center rounded-full border border-cream/45 font-mono text-[11px] text-cream backdrop-blur-[2px] phone:backdrop-blur-none"
             >
               {day}
             </span>

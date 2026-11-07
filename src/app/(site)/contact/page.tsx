@@ -6,6 +6,7 @@ import { OpenBadge } from "@/components/ui/OpenBadge";
 import { Reveal } from "@/components/ui/Reveal";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { ServiceAreaMap } from "@/components/sections/ServiceAreaMap";
+import { mapCities } from "@/content/cities";
 import { site, telHref, mailHref, smsHref } from "@/content/site";
 import { buildMetadata } from "@/lib/seo";
 import { breadcrumbSchema, graph, webPageSchema } from "@/lib/schema";
@@ -104,7 +105,7 @@ export default function ContactPage() {
           <h2 id="where-title" className="t-h2 mb-14 mt-5">
             On route <span className="t-italic">near</span> you.
           </h2>
-          <ServiceAreaMap />
+          <ServiceAreaMap cities={mapCities} />
         </div>
       </section>
     </PageShell>

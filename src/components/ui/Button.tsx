@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
 import clsx from "clsx";
-import { gsap, isTouch, prefersReducedMotion } from "@/lib/gsap";
+import { gsap, hasMotion, isTouch, prefersReducedMotion } from "@/lib/gsap";
 
 type Variant = "primary" | "ghost" | "light" | "lantern";
 
@@ -54,13 +54,13 @@ export function Button({
 
   const move = (e: React.PointerEvent) => {
     const el = ref.current;
-    if (!el || !magnetic || isTouch() || prefersReducedMotion()) return;
+    if (!el || !magnetic || !hasMotion() || isTouch() || prefersReducedMotion()) return;
     const r = el.getBoundingClientRect();
     const x = (e.clientX - (r.left + r.width / 2)) * 0.22;
     const y = (e.clientY - (r.top + r.height / 2)) * 0.32;
     gsap.to(el, { x, y, duration: 0.6, ease: "power3.out" });
   };
-  const leave = () => ref.current && gsap.to(ref.current, { x: 0, y: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" });
+  const leave = () => ref.current && hasMotion() && gsap.to(ref.current, { x: 0, y: 0, duration: 0.9, ease: "elastic.out(1, 0.45)" });
 
   const cls = clsx(
     "group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full px-6 py-3 text-[0.98rem] font-medium tracking-[-0.01em] transition-colors duration-300",

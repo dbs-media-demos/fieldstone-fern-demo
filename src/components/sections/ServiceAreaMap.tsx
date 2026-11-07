@@ -3,15 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { cities } from "@/content/cities";
+import type { MapCity } from "@/content/cities";
 import { Arrow } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
-
-const YARD = cities.find((c) => c.slug === "southlake")!.map;
+import { gsap, hasMotion, prefersReducedMotion, rafTween } from "@/lib/gsap";
 
 /** Gentle curve from the yard to a city, bowed to one side like a real drive. */
-function routeTo(to: { x: number; y: number }) {
+function routeTo(YARD: { x: number; y: number }, to: { x: number; y: number }) {
   const mx = (YARD.x + to.x) / 2;
   const my = (YARD.y + to.y) / 2;
   const dx = to.x - YARD.x;
@@ -24,9 +22,10 @@ function routeTo(to: { x: number; y: number }) {
  * Pick a city and a crew truck towing a mower trailer drives there from the Southlake
  * yard, drawing its route as it goes.
  */
-export function ServiceAreaMap() {
+export function ServiceAreaMap({ cities }: { cities: MapCity[] }) {
   const [active, setActive] = useState("southlake");
   const city = cities.find((c) => c.slug === active)!;
+  const yard = cities.find((c) => c.slug === "southlake")!.map;
   const route = useRef<SVGPathElement>(null);
   const truck = useRef<SVGGElement>(null);
 
@@ -49,6 +48,11 @@ export function ServiceAreaMap() {
       place();
       return;
     }
+    if (!hasMotion())
+      return rafTween(1.2, (t) => {
+        o.p = t;
+        place();
+      });
     const tween = gsap.to(o, { p: 1, duration: 1.5, ease: "power2.inOut", onUpdate: place, onStart: place });
     return () => {
       tween.kill();
@@ -56,10 +60,10 @@ export function ServiceAreaMap() {
   }, [active]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
+    <div className="grid gap-8 lg:grid-cols-12 lg:items-center phone:!grid-cols-1 phone:!gap-2.5">
       <div className="lg:col-span-7">
-        <div className="relative overflow-hidden rounded-[2rem] bg-forest p-3 sm:p-6">
-          <svg viewBox="0 0 420 340" className="h-auto w-full" role="img" aria-labelledby="map-title map-desc">
+        <div className="relative overflow-hidden rounded-[2rem] bg-forest p-3 sm:p-6 phone:!rounded-[1.25rem] phone:!p-1.5">
+          <svg viewBox="0 0 420 340" className="h-auto w-full phone:mx-auto phone:!w-[86%]" role="img" aria-labelledby="map-title map-desc">
             <title id="map-title">Service area map</title>
             <desc id="map-desc">
               Stylized map of Southlake, Keller, Colleyville, Grapevine, Flower Mound and Fort Worth, with our yard in Southlake at the center.
@@ -116,7 +120,7 @@ export function ServiceAreaMap() {
             {/* today's route + crew truck */}
             <path
               ref={route}
-              d={routeTo(city.map)}
+              d={routeTo(yard, city.map)}
               pathLength={1}
               fill="none"
               stroke="#e8b45a"
@@ -143,7 +147,7 @@ export function ServiceAreaMap() {
                   role="button"
                   aria-label={`${c.name}: ${c.drive}`}
                   aria-pressed={isActive}
-                  onPointerEnter={() => setActive(c.slug)}
+                  onPointerEnter={(e) => e.pointerType === "mouse" && setActive(c.slug)}
                   onFocus={() => setActive(c.slug)}
                   onClick={() => setActive(c.slug)}
                   className="cursor-pointer outline-none [&:focus-visible_circle.ring]:stroke-lantern"
@@ -175,33 +179,33 @@ export function ServiceAreaMap() {
               );
             })}
           </svg>
-          <p className="t-eyebrow absolute bottom-4 left-5 text-sage/70 sm:bottom-6 sm:left-8">Not to scale · crews on route daily</p>
+          <p className="t-eyebrow absolute bottom-4 left-5 text-sage/70 sm:bottom-6 sm:left-8 phone:!bottom-2 phone:!left-3 phone:!text-[0.56rem]">Not to scale · crews on route daily</p>
         </div>
       </div>
 
-      <div className="lg:col-span-5">
-        <div className="relative overflow-hidden rounded-[1.5rem] border border-line bg-surface">
-          <div className="relative aspect-[16/10]">
+      <div className="lg:col-span-5 phone:flex phone:flex-col phone:gap-2.5">
+        <div className="relative overflow-hidden rounded-[1.5rem] border border-line bg-surface phone:!grid phone:grid-cols-[5.5rem_1fr] phone:!rounded-[1.25rem]">
+          <div className="relative aspect-[16/10] phone:!aspect-auto">
             {cities.map((c) => (
-              <div key={c.slug} className={clsx("absolute inset-0 transition-opacity duration-700", c.slug === active ? "opacity-100" : "opacity-0")}>
-                <Photo slug={c.hero} sizes="(min-width: 1024px) 38vw, 100vw" decorative />
+              <div key={c.slug} className={clsx("absolute inset-0 transition-opacity duration-700", c.slug === active ? "opacity-100" : "opacity-0 phone:hidden")}>
+                <Photo slug={c.hero} sizes="(min-width: 1024px) 38vw, 40vw" decorative />
               </div>
             ))}
           </div>
-          <div className="p-6 sm:p-8" aria-live="polite">
+          <div className="p-6 sm:p-8 phone:!p-3" aria-live="polite">
             <p className="t-eyebrow text-accent">{city.drive}</p>
-            <h3 className="t-h3 mt-3">{city.name}, TX</h3>
-            <p className="mt-3 text-muted">{city.yards}</p>
-            <p className="mt-2 text-sm text-faint">{city.neighborhoods.slice(0, 5).join(" · ")}</p>
+            <h3 className="t-h3 mt-3 phone:!mt-1">{city.name}, TX</h3>
+            <p className="mt-3 text-muted phone:!mt-1 phone:!text-[0.88rem] phone:!leading-snug">{city.yards}</p>
+            <p className="mt-2 text-sm text-faint phone:hidden">{city.neighborhoods.slice(0, 5).join(" · ")}</p>
             <Link
               href={`/service-areas/${city.slug}`}
-              className="mt-6 inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium phone:!mt-0 phone:!min-h-10 phone:!text-sm"
             >
               Landscaping in {city.name} <Arrow />
             </Link>
           </div>
         </div>
-        <ul className="mt-4 flex flex-wrap gap-2 lg:hidden">
+        <ul className="mt-4 flex flex-wrap gap-2 lg:hidden no-scrollbar phone:!-mx-[var(--gutter)] phone:!mt-0 phone:!flex phone:!flex-nowrap phone:!gap-1.5 phone:!overflow-x-auto phone:!px-[var(--gutter)] phone:order-first">
           {cities.map((c) => (
             <li key={c.slug}>
               <button
@@ -209,7 +213,7 @@ export function ServiceAreaMap() {
                 onClick={() => setActive(c.slug)}
                 aria-pressed={c.slug === active}
                 className={clsx(
-                  "min-h-11 rounded-full border px-4 text-sm",
+                  "min-h-11 whitespace-nowrap rounded-full border px-4 text-sm phone:!min-h-10 phone:!px-3.5",
                   c.slug === active ? "border-forest bg-forest text-cream" : "border-line",
                 )}
               >

@@ -41,7 +41,7 @@ export function PreviewMap({ biz }: { biz: Biz }) {
           </Reveal>
           <Reveal className="lg:col-span-8">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-line sm:aspect-[16/10]">
-              <iframe src={embed} title={`Map: ${query}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="absolute inset-0 h-full w-full border-0" />
+              <iframe src={embed} title={`Map: ${query}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="absolute inset-0 h-full w-full border-0 phone:pointer-events-none" />
             </div>
           </Reveal>
         </div>

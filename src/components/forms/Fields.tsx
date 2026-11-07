@@ -4,7 +4,7 @@ import clsx from "clsx";
 import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 const base =
-  "mt-2 block w-full rounded-2xl border bg-bg px-4 py-3.5 text-[1.02rem] text-fg outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-faint focus:border-fern focus:shadow-[0_0_0_4px_rgba(47,74,52,0.14)]";
+  "mt-2 block w-full rounded-2xl border bg-bg px-4 py-3.5 text-[1.02rem] text-fg outline-none phone:!mt-1 phone:!py-2.5 transition-[border-color,box-shadow] duration-300 placeholder:text-faint focus:border-fern focus:shadow-[0_0_0_4px_rgba(47,74,52,0.14)]";
 
 export function Field({
   label,

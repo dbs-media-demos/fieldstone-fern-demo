@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { Photo } from "@/components/ui/Photo";
 import { Arrow } from "@/components/ui/Button";
 import { ServiceGlyph } from "@/components/ui/ServiceGlyph";
-import { services } from "@/content/services";
+import type { Service } from "@/content/services";
 import { gsap, ScrollTrigger, useGSAP, isTouch, prefersReducedMotion } from "@/lib/gsap";
 
 /**
@@ -16,7 +16,7 @@ import { gsap, ScrollTrigger, useGSAP, isTouch, prefersReducedMotion } from "@/l
  * or focused; on phones, the row crossing the middle of the screen), and the row
  * edges are cut in like a fresh lawn edge, a trimmer head running along each line.
  */
-export function ServicesList() {
+export function ServicesList({ services }: { services: Pick<Service, "slug" | "short" | "summary" | "hero" | "kind">[] }) {
   const root = useRef<HTMLDivElement>(null);
   const preview = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState<number | null>(null);
@@ -74,7 +74,7 @@ export function ServicesList() {
 
   return (
     <div ref={root} className="relative" onPointerLeave={() => setActive(null)}>
-      <ul className="border-t border-line">
+      <ul className="border-t border-line phone:grid phone:grid-cols-2 phone:gap-x-3">
         {services.map((s, i) => (
           <li key={s.slug} className="svc-row relative">
             <Link
@@ -82,10 +82,10 @@ export function ServicesList() {
               onPointerEnter={() => setActive(i)}
               onFocus={() => setActive(i)}
               onBlur={() => setActive(null)}
-              className={clsx("group relative isolate grid grid-cols-[auto_1fr_auto] items-center gap-4 py-6 sm:gap-8 md:py-8", live === i && "is-live")}
+              className={clsx("group relative isolate grid grid-cols-[auto_1fr_auto] items-center gap-4 py-6 sm:gap-8 md:py-8 phone:!flex phone:!min-h-[3.2rem] phone:!py-1.5", live === i && "is-live")}
             >
-              <span aria-hidden className="svc-sweep pointer-events-none absolute inset-y-0 -left-[var(--gutter)] -right-[var(--gutter)] -z-10" />
-              <span className="flex w-9 flex-col items-center gap-1.5 md:w-14">
+              <span aria-hidden className="svc-sweep pointer-events-none absolute inset-y-0 -left-[var(--gutter)] -right-[var(--gutter)] -z-10 phone:hidden" />
+              <span className="flex w-9 flex-col items-center gap-1.5 md:w-14 phone:hidden">
                 <ServiceGlyph
                   slug={s.slug}
                   className="h-9 w-9 text-faint transition-colors duration-500 group-hover:text-fg group-[.is-live]:text-fg md:h-14 md:w-14"
@@ -93,17 +93,17 @@ export function ServicesList() {
                 <span className="t-eyebrow text-[0.62rem] text-faint">0{i + 1}</span>
               </span>
               <span className="min-w-0">
-                <span className="flex items-center gap-4">
-                  <span className="relative h-16 w-14 shrink-0 overflow-hidden rounded-t-full rounded-b-md md:hidden">
+                <span className="flex items-center gap-4 phone:gap-2.5">
+                  <span className="relative h-16 w-14 shrink-0 overflow-hidden rounded-t-full rounded-b-md md:hidden phone:!block phone:!h-10 phone:!w-8">
                     <Photo slug={s.hero} sizes="64px" decorative />
                   </span>
-                  <span className="font-display block text-[clamp(1.7rem,4.6vw,4.4rem)] leading-[1] tracking-[-0.035em] transition-[transform,color] duration-700 ease-[var(--ease-out-expo)] group-hover:translate-x-3 group-hover:text-accent group-[.is-live]:translate-x-3 group-[.is-live]:text-accent">
+                  <span className="font-display block text-[clamp(1.7rem,4.6vw,4.4rem)] leading-[1] tracking-[-0.035em] phone:!text-[1.05rem] phone:!leading-[1.08] phone:!tracking-[-0.015em] transition-[transform,color] duration-700 ease-[var(--ease-out-expo)] group-hover:translate-x-3 group-hover:text-accent group-[.is-live]:translate-x-3 group-[.is-live]:text-accent">
                     {s.short}
                   </span>
                 </span>
-                <span className="mt-3 hidden max-w-2xl text-muted md:block">{s.summary}</span>
+                <span className="mt-3 hidden max-w-2xl text-muted md:block phone:!hidden">{s.summary}</span>
               </span>
-              <span className="flex items-center gap-4">
+              <span className="flex items-center gap-4 phone:hidden">
                 <span className="t-eyebrow hidden rounded-full border border-line px-3 py-2 text-muted lg:inline">
                   {s.kind === "recurring" ? "Recurring" : "Project"}
                 </span>
@@ -115,7 +115,7 @@ export function ServicesList() {
             <span aria-hidden className="svc-edge pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left bg-line" />
             <span
               aria-hidden
-              className="svc-head pointer-events-none absolute bottom-0 left-0 h-[3px] w-10 translate-y-px rounded-full bg-gradient-to-r from-transparent to-accent opacity-0"
+              className="svc-head pointer-events-none absolute bottom-0 left-0 h-[3px] w-10 translate-y-px rounded-full bg-gradient-to-r from-transparent to-accent opacity-0 phone:hidden"
             />
           </li>
         ))}
@@ -126,7 +126,7 @@ export function ServicesList() {
         ref={preview}
         aria-hidden
         className={clsx(
-          "pointer-events-none absolute left-0 top-0 z-10 hidden h-[340px] w-[270px] -translate-x-[115%] -translate-y-1/2 overflow-hidden rounded-t-[140px] rounded-b-2xl shadow-2xl shadow-forest/30 transition-[opacity,scale] duration-500 ease-[var(--ease-out-expo)] [@media(hover:hover)]:block",
+          "pointer-events-none absolute left-0 top-0 z-10 hidden h-[340px] w-[270px] -translate-x-[115%] -translate-y-1/2 overflow-hidden rounded-t-[140px] rounded-b-2xl shadow-2xl shadow-forest/30 transition-[opacity,scale] duration-500 ease-[var(--ease-out-expo)] [@media(hover:hover)]:block phone:!hidden",
           active === null ? "scale-75 opacity-0" : "scale-100 opacity-100",
         )}
       >

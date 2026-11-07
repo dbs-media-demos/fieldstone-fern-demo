@@ -5,6 +5,7 @@ import { Photo } from "@/components/ui/Photo";
 import { Arrow } from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { ServiceAreaMap } from "@/components/sections/ServiceAreaMap";
+import { mapCities } from "@/content/cities";
 import { CityMarquee, CtaBand } from "@/components/sections/Blocks";
 import { cities } from "@/content/cities";
 import { buildMetadata } from "@/lib/seo";
@@ -44,7 +45,7 @@ export default function AreasPage() {
 
       <section className="theme-sand pt-24 sm:pt-32">
         <div className="wrap pb-24">
-          <ServiceAreaMap />
+          <ServiceAreaMap cities={mapCities} />
         </div>
         <CityMarquee />
       </section>

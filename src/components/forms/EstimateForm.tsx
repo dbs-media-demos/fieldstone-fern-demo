@@ -9,7 +9,7 @@ import { Arrow } from "@/components/ui/Button";
 import { services } from "@/content/services";
 import { cities } from "@/content/cities";
 import { site, telHref, agencyName } from "@/content/site";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { gsap, hasMotion, prefersReducedMotion } from "@/lib/gsap";
 
 const STEPS = ["Services", "Property", "Timing", "Contact"];
 const SIZES = ["Under ¼ acre", "¼ – ½ acre", "½ – 1 acre", "Over 1 acre", "Not sure"];
@@ -84,7 +84,7 @@ export function EstimateForm() {
     if (prev.current.step === step && prev.current.done === done) return;
     prev.current = { step, done };
     heading.current?.focus({ preventScroll: true });
-    if (panel.current && !prefersReducedMotion()) gsap.fromTo(panel.current, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.7, ease: "expo.out" });
+    if (panel.current && hasMotion() && !prefersReducedMotion()) gsap.fromTo(panel.current, { opacity: 0, x: 40 }, { opacity: 1, x: 0, duration: 0.7, ease: "expo.out" });
     const top = panel.current?.closest("section")?.getBoundingClientRect().top ?? 0;
     if (top < 0) window.scrollBy({ top: top - 100, behavior: prefersReducedMotion() ? "auto" : "smooth" });
   }, [step, done]);

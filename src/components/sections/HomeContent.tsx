@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { PageShell, SectionHead } from "@/components/ui/Page";
 import { Photo } from "@/components/ui/Photo";
@@ -16,10 +16,17 @@ import { ProcessStack } from "@/components/sections/ProcessStack";
 import { ServiceAreaMap } from "@/components/sections/ServiceAreaMap";
 import { CityMarquee, CtaBand, FaqList, ReviewsWall } from "@/components/sections/Blocks";
 import { faqs, stats } from "@/content/misc";
+import { mapCities } from "@/content/cities";
+import { projects } from "@/content/projects";
+import { services } from "@/content/services";
 import { PreviewMap } from "@/components/preview/PreviewMap";
-import { PlantingBed } from "@/components/fx/PlantingBed";
+import { LazyPlantingBed } from "@/components/fx/LazyPlantingBed";
+import { BudgetGuide, PhoneTeam, QuoteSection } from "@/components/sections/PhoneSections";
 import { defaultBiz } from "@/lib/biz";
 import { openDays, type Biz } from "@/lib/biz-core";
+
+/** Where a section sits on phones (project work: gallery, reviews, how it works + budget, team, form). Desktop keeps the source order. */
+const at = (order: number) => ({ "--o": order }) as CSSProperties;
 
 const homeFaqs = faqs.filter((_, i) => [0, 1, 4, 5, 8].includes(i));
 
@@ -48,9 +55,13 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
   return (
     <PageShell>
       {children}
-      <Hero />
+      <div className="home-flow">
+      <div style={at(1)}>
+        <Hero />
+      </div>
 
       {/* Statement */}
+      <div style={at(8)}>
       <section className="theme-cream relative overflow-hidden py-28 sm:py-36">
         <div aria-hidden className="leaf-shadows">
           <div style={{ top: "-20%", right: "-15%" }} />
@@ -61,12 +72,14 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
               {biz.preview ? biz.area : "Since 2009 · Southlake, Texas"}
             </Reveal>
             <ScrubWords
-              className="font-display mt-8 text-[clamp(1.75rem,3.6vw,3.6rem)] leading-[1.12] tracking-[-0.025em]"
+              className="font-display mt-8 text-[clamp(1.75rem,3.6vw,3.6rem)] leading-[1.12] tracking-[-0.025em] phone:!mt-2 phone:!text-[1.2rem] phone:!leading-[1.22]"
               text="We’re a landscape studio and a lawn crew under one roof. The people who design your patio are the people who edge your lawn every Thursday, so the garden we plant is the garden you keep."
             />
-            <Reveal className="mt-12 flex flex-wrap gap-3" delay={0.1}>
-              <Button href="/about">Our story</Button>
-              <Button href="/services" variant="ghost">
+            <Reveal className="mt-12 flex flex-wrap gap-3 phone:!mt-3 phone:!gap-2" delay={0.1}>
+              <Button href="/about" className="phone:!min-h-10 phone:!px-5 phone:!py-2">
+                Our story
+              </Button>
+              <Button href="/services" variant="ghost" className="phone:!min-h-10 phone:!px-5 phone:!py-2">
                 All services
               </Button>
             </Reveal>
@@ -85,15 +98,15 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
           </div>
         </div>
 
-        <div className="wrap relative mt-36 sm:mt-40 lg:mt-24">
-          <PlantingBed className="absolute bottom-full left-[var(--gutter)] aspect-[10/3] w-[calc(100%-2*var(--gutter))] lg:w-[58%]" />
-          <Reveal as="dl" stagger={0.08} className="grid grid-cols-2 gap-y-10 border-t border-line pt-10 lg:grid-cols-4">
+        <div className="wrap relative mt-36 sm:mt-40 lg:mt-24 phone:!mt-5">
+          <LazyPlantingBed className="absolute bottom-full left-[var(--gutter)] aspect-[10/3] w-[calc(100%-2*var(--gutter))] lg:w-[58%]" />
+          <Reveal as="dl" stagger={0.08} className="grid grid-cols-2 gap-y-10 border-t border-line pt-10 lg:grid-cols-4 phone:!gap-y-3 phone:!pt-3">
             {statList.map((s) => (
               <div key={s.label} className="pr-6">
                 <dt className="sr-only">{s.label}</dt>
                 <dd>
-                  <Counter value={s.value} decimals={s.decimals} suffix={s.suffix} className="font-display block text-[clamp(3rem,6vw,5.6rem)] leading-none tracking-[-0.045em]" />
-                  <span className="mt-3 block text-muted">{s.label}</span>
+                  <Counter value={s.value} decimals={s.decimals} suffix={s.suffix} className="font-display block text-[clamp(3rem,6vw,5.6rem)] leading-none tracking-[-0.045em] phone:!text-[2.1rem]" />
+                  <span className="mt-3 block text-muted phone:!mt-0.5 phone:!text-[0.84rem] phone:!leading-tight">{s.label}</span>
                 </dd>
               </div>
             ))}
@@ -101,7 +114,16 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         </div>
       </section>
 
+      </div>
+
+      {!biz.preview && (
+        <div style={at(9)}>
+          <PhoneTeam />
+        </div>
+      )}
+
       {/* Two ways we work */}
+      <div style={at(10)}>
       <section className="theme-sand py-24 sm:py-32">
         <div className="wrap">
           <SectionHead
@@ -117,7 +139,10 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         </div>
       </section>
 
+      </div>
+
       {/* Services */}
+      <div style={at(11)}>
       <section className="theme-cream py-24 sm:py-32" aria-labelledby="services-title">
         <div className="wrap">
           <SectionHead
@@ -128,23 +153,38 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
                 Everything outside, <span className="t-italic">handled.</span>
               </>
             }
-            aside="Seven services, one team, one number to call. Hover a service to preview it."
+            aside={
+              <>
+                Seven services, one team, one number to call. <span className="phone:hidden">Hover a service to preview it.</span>
+              </>
+            }
           />
           <div className="mt-14">
-            <ServicesList />
+            <ServicesList services={services.map(({ slug, short, summary, hero, kind }) => ({ slug, short, summary, hero, kind }))} />
           </div>
         </div>
       </section>
 
-      <SeasonsScroll />
+      </div>
 
-      <ProjectsRail />
+      <div style={at(13)}>
+        <SeasonsScroll />
+      </div>
 
-      <BeforeAfterGrow />
+      <div style={at(2)}>
+        <ProjectsRail projects={projects.map(({ slug, title, city, category, year, hero }) => ({ slug, title, city, category, year, hero }))} />
+      </div>
 
-      <NightReveal />
+      <div style={at(4)}>
+        <BeforeAfterGrow />
+      </div>
+
+      <div style={at(12)}>
+        <NightReveal />
+      </div>
 
       {/* Lawn plan builder */}
+      <div style={at(7)}>
       <section id="lawn-plan" className="theme-cream relative overflow-hidden py-24 sm:py-32" aria-labelledby="builder-title">
         <div aria-hidden className="leaf-shadows">
           <div style={{ bottom: "-30%", left: "-20%" }} />
@@ -166,7 +206,10 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         </div>
       </section>
 
+      </div>
+
       {/* Process */}
+      <div style={at(5)}>
       <section className="theme-forest py-24 sm:py-32" aria-labelledby="process-title">
         <div className="wrap">
           <SectionHead
@@ -185,10 +228,19 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         </div>
       </section>
 
+      </div>
+
+      <div style={at(6)}>
+        <BudgetGuide />
+      </div>
+
+      <div style={at(3)}>
       <section className="theme-cream py-24 sm:py-32">
         <ReviewsWall biz={biz} />
       </section>
+      </div>
 
+      <div style={at(14)}>
       {biz.preview ? (
         <PreviewMap biz={biz} />
       ) : (
@@ -206,8 +258,8 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
                 }
                 aside="Our yard is in Southlake. Crews are on route across northeast Tarrant and southern Denton County every weekday."
               />
-              <div className="mt-14 pb-20">
-                <ServiceAreaMap />
+              <div className="mt-14 pb-20 phone:!pb-6">
+                <ServiceAreaMap cities={mapCities} />
               </div>
             </div>
             <CityMarquee />
@@ -215,25 +267,39 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
         </>
       )}
 
+      </div>
+
       {/* FAQ */}
+      <div style={at(15)}>
       <section className="theme-cream py-24 sm:py-32" aria-labelledby="faq-title">
-        <div className="wrap grid gap-12 lg:grid-cols-12">
+        <div className="wrap grid gap-12 lg:grid-cols-12 phone:!grid-cols-1 phone:!gap-3">
           <div className="lg:col-span-4">
             <Reveal as="p" className="t-eyebrow text-accent">
               FAQ
             </Reveal>
-            <h2 id="faq-title" className="t-h2 mt-5">
-              Good <span className="t-italic">questions.</span>
-            </h2>
-            <Link href="/faq" className="mt-8 inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium">
-              All FAQs <Arrow />
-            </Link>
+            <div className="phone:flex phone:items-end phone:justify-between phone:gap-3">
+              <h2 id="faq-title" className="t-h2 mt-5">
+                Good <span className="t-italic">questions.</span>
+              </h2>
+              <Link href="/faq" className="mt-8 inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium phone:!mt-0 phone:shrink-0 phone:!text-sm">
+                All FAQs <Arrow />
+              </Link>
+            </div>
           </div>
           <FaqList items={homeFaqs} className="lg:col-span-8" />
         </div>
       </section>
 
-      <CtaBand biz={biz} />
+      </div>
+
+      <div style={at(16)}>
+        <CtaBand biz={biz} formBelow />
+      </div>
+
+      <div style={at(17)}>
+        <QuoteSection />
+      </div>
+      </div>
     </PageShell>
   );
 }

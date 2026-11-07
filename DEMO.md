@@ -27,6 +27,8 @@
 - Lighthouse (production build, local, mobile): home P 81 / A 100 / BP 100 / SEO 100 · inner pages P 85–90 / 100 / 100 / 100 · CLS 0.
   Desktop: P 97–99 / 100 / 100 / 100. (SEO measured with NEXT_PUBLIC_NOINDEX=false; the deployed demo is noindex on purpose, which Lighthouse reports as an SEO issue.)
 
+- Phones (below 768 px or touch; desktop's order and motion stay as above): project-work order via CSS `order` (hero with a real project photo, gallery by type, reviews naming the project, before/after, how it works, budget guide, lawn builder, team, the rest, FAQ, quote form); no pins, scrubbing, video, GSAP or Lenis (lib/gsap loads them on demand, desktop only); two font files in public/fonts plus the system sans; the concept badge sits in the page flow at the very end. Motion kept: tap feedback, one fade-and-rise per section, swipe rows, the sliders and builder, and a strip of lawn mowed once along the hero's foot.
+
 ## Portfolio copy
 EN title: Fieldstone & Fern Landscapes
 EN one-liner (≤ 120 chars): A lush, image-led site for a Southlake landscaping & lawn-care company, with a live lawn-price builder and seasons scroll.

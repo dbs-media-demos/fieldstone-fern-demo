@@ -17,4 +17,5 @@ npm run dev -- --port 4105
 - `NEXT_PUBLIC_SITE_URL` sets the canonical origin (default `https://fieldstone-fern-demo.vercel.app`).
 - Forms validate and show success states but send nothing.
 - Content lives in `src/content/*`. Photo credits are in `public/images/SOURCES.md`.
+- `public/fonts/*.woff2` are the phones' only web fonts: the latin Fraunces roman and italic with fonttools, pinned to wght 390 and 340. Add phone-only styles with the `phone:` variant or the phone block at the end of `globals.css`.
 - `scripts/optimize-images.mjs` resizes source photos to 2000px masters and regenerates `src/content/image-meta.json`.

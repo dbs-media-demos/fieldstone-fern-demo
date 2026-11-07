@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Phones: below 768 px or touch (same rule as PHONE_QUERY in lib/gsap). */
+@custom-variant phone {
+  @media (max-width: 767px) {
+    @slot;
+  }
+  @media (hover: none) and (pointer: coarse) {
+    @slot;
+  }
+}
+
 /* ────────────────────────────────────────────────────────────────
    Fieldstone & Fern — design tokens
    Forest / Fern / Moss / Sage greens, Cream + Sand paper tones,
@@ -818,4 +828,401 @@ input[type="range"].yard-range::-moz-range-thumb {
 .ba-leaf.is-on,
 .ba-bloom.is-on {
   transform: none;
+}
+
+/* ─────────────────────────── phones ───────────────────────────
+   Below 768 px or touch (the `phone:` variant, and PHONE_QUERY in lib/gsap).
+   Simple and fast: one stacked column, no pins or scrubbing, two font files. Desktop never
+   matches this block; these rules are unlayered, so they win over Tailwind's utilities. */
+
+@font-face {
+  font-family: "FF Display";
+  src: url("/fonts/fraunces-phone.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "FF Display";
+  src: url("/fonts/fraunces-italic-phone.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+.hero-svc,
+.hero-lawn,
+.hero-call {
+  display: none;
+}
+
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  /* Fraunces (two small files) for display, the phone's own sans for everything else */
+  html:root {
+    --font-fraunces: "FF Display", "Fraunces Fallback", Georgia, serif;
+    --font-hanken: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-dm-mono: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  :root {
+    --header-h: 3.75rem;
+    --bar-h: calc(4.25rem + env(safe-area-inset-bottom));
+  }
+
+  /* ── type and gaps: smaller, tighter ── */
+  .t-h1 {
+    font-size: clamp(2.4rem, 11vw, 3.4rem);
+    line-height: 1;
+  }
+  .t-h2 {
+    font-size: clamp(1.7rem, 7.8vw, 2.8rem);
+    line-height: 1.06;
+    text-wrap: balance;
+    letter-spacing: -0.028em;
+  }
+  .t-h3 {
+    font-size: 1.28rem;
+    line-height: 1.12;
+  }
+  .t-lead {
+    font-size: 1.02rem;
+    line-height: 1.4;
+  }
+  .t-body {
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+  .t-eyebrow {
+    font-size: 0.69rem;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+  }
+  main .py-24,
+  main .py-28 {
+    padding-block: 1.75rem;
+  }
+  main .pt-24 {
+    padding-top: 1.75rem;
+  }
+  main .mt-14,
+  main .mt-16 {
+    margin-top: 0.9rem;
+  }
+  main .mt-5 {
+    margin-top: 0.55rem;
+  }
+  main .gap-8 {
+    gap: 0.5rem;
+  }
+  main .gap-12,
+  main .gap-16 {
+    gap: 1.25rem;
+  }
+
+  /* ── still: what runs on desktop rests here ── */
+  .leaf-shadows,
+  .grain {
+    display: none;
+  }
+  .anim-heading,
+  .anim-fade,
+  .anim-arch,
+  .anim-hero-frame,
+  .hero-still,
+  .fiddle-draw,
+  .pulse-dot,
+  .marquee,
+  .bed-sway {
+    animation: none;
+  }
+  .yard-mower {
+    animation: none;
+    transform: translate(60px, 140px) rotate(90deg);
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  /* ── motion that stays ── */
+  a,
+  button,
+  summary,
+  label {
+    -webkit-tap-highlight-color: transparent;
+  }
+  a:active,
+  button:active,
+  summary:active,
+  label:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+  }
+  .rise-wait {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  .rise-wait.rise-in {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.5s ease-out,
+      transform 0.6s var(--ease-out-expo);
+  }
+  #site-menu:not([hidden]) {
+    animation: menu-in 0.2s ease-out;
+  }
+  input[type="range"] {
+    touch-action: pan-y;
+  }
+
+  /* A row of cards to swipe, the next one half showing. overflow-y: hidden keeps a stray pixel of
+     height from making the row a vertical scroller: a swipe up or down always moves the page. */
+  .no-scrollbar {
+    overflow-y: hidden;
+  }
+  .phone-swipe {
+    display: flex;
+    gap: 0.625rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    padding-inline: var(--gutter);
+    scrollbar-width: none;
+  }
+  .phone-swipe::-webkit-scrollbar {
+    display: none;
+  }
+  .phone-swipe > * {
+    flex: 0 0 min(var(--card, 80vw), 22rem);
+    width: min(var(--card, 80vw), 22rem);
+    margin-top: 0;
+    scroll-snap-align: start;
+  }
+  .wrap .phone-swipe {
+    margin-inline: calc(var(--gutter) * -1);
+  }
+
+  /* ── order: follows the kind of business ── */
+  .home-flow {
+    display: flex;
+    flex-direction: column;
+  }
+  .home-flow > * {
+    order: var(--o);
+    min-width: 0;
+  }
+
+  /* ── first screen ── */
+  .hero-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: auto;
+    min-height: min(76svh, 36.5rem);
+  }
+  .hero-frame {
+    clip-path: none;
+  }
+  .hero-veil {
+    background: linear-gradient(to top, var(--forest) 0%, var(--forest) 33%, rgba(22, 36, 28, 0.55) 48%, rgba(22, 36, 28, 0) 66%, rgba(22, 36, 28, 0.42) 100%);
+  }
+  .hero-still {
+    bottom: auto;
+    height: 68%;
+  }
+  .hero-still img {
+    object-position: 50% 86%;
+  }
+  .hero-body {
+    height: auto;
+    justify-content: flex-end;
+    padding-top: calc(var(--header-h) + 1rem);
+    padding-bottom: 1.9rem;
+  }
+  .hero-head {
+    display: block;
+    flex: none;
+    padding-bottom: 0;
+  }
+  .hero-eyebrow {
+    display: none;
+  }
+  .hero-svc {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--cream);
+    font-family: var(--font-serif);
+    font-size: clamp(2.75rem, 13.4vw, 4.2rem);
+    font-weight: 380;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+  .hero-svc-long {
+    font-size: clamp(2.2rem, 10.6vw, 3.6rem);
+  }
+  .hero-l1,
+  .hero-l2 {
+    display: inline;
+    margin: 0;
+    color: rgb(243 237 225 / 0.92);
+    font-size: 1.14rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-shadow: none;
+  }
+  .hero-l1::after {
+    content: " ";
+  }
+  .hero-foot {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-top: 0.7rem;
+  }
+  .hero-cta {
+    order: 2;
+  }
+  .hero-more {
+    display: none;
+  }
+  .hero-call {
+    display: inline-flex;
+    width: 100%;
+    max-width: 26rem;
+    min-height: 3.25rem;
+    font-size: 1.06rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-facts {
+    display: contents;
+  }
+  .hero-facts > a {
+    order: 1;
+    align-self: flex-start;
+    min-height: 1.9rem;
+    padding: 0;
+    border: 0;
+    color: var(--cream);
+  }
+  .hero-facts > span {
+    order: 3;
+    align-self: flex-start;
+    min-height: 1.75rem;
+    padding: 0;
+    border: 0;
+    color: rgb(243 237 225 / 0.86);
+    font-size: 0.84rem;
+  }
+
+  /* The one lawn touch: a strip along the hero's foot, mowed once on load (transform only) */
+  .hero-lawn {
+    display: block;
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 1;
+    height: 0.6rem;
+    background: #2f4a34;
+  }
+  .hero-lawn-cut {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, #a9bb72 0 46px, #5f7d42 46px 92px);
+    transform-origin: 0 50%;
+    animation: lawn-cut 2.6s cubic-bezier(0.45, 0, 0.55, 1) 0.5s both;
+  }
+  .hero-mower {
+    position: absolute;
+    left: 0;
+    bottom: 0.1rem;
+    width: 2.6rem;
+    height: auto;
+    animation: lawn-mower 2.6s cubic-bezier(0.45, 0, 0.55, 1) 0.5s both;
+  }
+
+  /* ── stacked versions of the desktop scenes ── */
+  .city-list {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 0.75rem;
+    width: auto;
+    padding-inline: var(--gutter);
+  }
+  .city-list > :nth-child(n + 9) {
+    display: none;
+  }
+  .season-name {
+    margin-top: 0.15rem;
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+  .night-section {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    padding-block: 1.75rem;
+  }
+  .night-body {
+    display: contents;
+  }
+  .night-head {
+    order: 1;
+    padding-inline: var(--gutter);
+  }
+  .night-stage {
+    order: 2;
+    position: relative;
+    left: auto;
+    top: auto;
+    translate: none;
+    flex: none;
+    width: auto;
+    margin: 0.9rem var(--gutter) 0;
+    overflow: hidden;
+    border-radius: 1.25rem;
+  }
+  .night-controls {
+    order: 3;
+    margin-top: 0.75rem;
+    padding-inline: var(--gutter);
+    gap: 0.5rem;
+    z-index: 1;
+  }
+
+  /* ── the concept badge joins the page: nothing to cover, clear of the bar ── */
+  .demo-pill {
+    position: static;
+    justify-content: center;
+    padding-bottom: calc(var(--bar-h) + 0.25rem);
+    border-radius: 0;
+    background: var(--forest);
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lawn-cut {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes lawn-mower {
+  from {
+    transform: translateX(-2.6rem);
+  }
+  to {
+    transform: translateX(100vw);
+  }
 }

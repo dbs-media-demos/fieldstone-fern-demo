@@ -21,33 +21,33 @@ const LEAVES: [number, number, 1 | -1, number][] = [
  * "after" and it grows, week by week, from bare soil to a flowering plant.
  */
 export function BeforeAfterGrow() {
-  const [pos, setPos] = useState(50);
-  const g = 1 - pos / 100;
+  // How far along the seedling is. Quantised, so the slider moving every frame doesn't render every frame.
+  const [g, setG] = useState(0.5);
   const week = Math.round(g * WEEKS);
 
   return (
     <section className="theme-sand py-24 sm:py-32" aria-labelledby="ba-title">
-      <div className="wrap grid gap-12 lg:grid-cols-12 lg:items-center">
-        <div className="lg:col-span-4">
-          <Reveal as="p" className="t-eyebrow text-accent">
+      <div className="wrap grid gap-12 lg:grid-cols-12 lg:items-center phone:!grid-cols-1 phone:!gap-3">
+        <div className="lg:col-span-4 phone:contents">
+          <Reveal as="p" className="t-eyebrow text-accent phone:order-1">
             Before · After
           </Reveal>
-          <h2 id="ba-title" className="t-h2 mt-5">
+          <h2 id="ba-title" className="t-h2 mt-5 phone:order-2 phone:!mt-0">
             Same yard. <span className="t-italic">Six</span> weeks.
           </h2>
-          <Reveal className="mt-6 space-y-4 text-muted" delay={0.1}>
+          <Reveal className="mt-6 space-y-4 text-muted phone:order-5 phone:!mt-0 phone:space-y-2 phone:text-[0.97rem]" delay={0.1}>
             <p>
               The Harmons in Timarron had a fenced rectangle of tired Bermuda. Now they have a flagstone courtyard with a fire pit that&rsquo;s lit every
               evening from October to March.
             </p>
-            <p className="text-sm">Drag the handle, or focus it and use your arrow keys.</p>
-            <Link href="/projects/southlake-courtyard-patio" className="inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium text-fg">
+            <p className="text-sm phone:hidden">Drag the handle, or focus it and use your arrow keys.</p>
+            <Link href="/projects/southlake-courtyard-patio" className="inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium text-fg phone:!min-h-9">
               See the project <Arrow />
             </Link>
           </Reveal>
 
-          <div aria-hidden className="mt-10 flex items-end gap-4">
-            <svg viewBox="0 0 80 100" className="h-24 w-20 shrink-0 overflow-visible">
+          <div aria-hidden className="mt-10 flex items-end gap-4 phone:order-4 phone:!-my-1 phone:!mt-0">
+            <svg viewBox="0 0 80 100" className="h-24 w-20 shrink-0 overflow-visible phone:h-16 phone:w-14">
               <ellipse cx={40} cy={93} rx={28} ry={5} fill="var(--forest)" fillOpacity={0.16} />
               <path
                 d="M40 92C40 80 38 68 41 56C43 46 40 36 40 26"
@@ -76,20 +76,20 @@ export function BeforeAfterGrow() {
             </svg>
             <p className="pb-2">
               <span className="t-eyebrow block text-faint">Install timeline</span>
-              <span className="font-display mt-1 block text-3xl leading-none tracking-[-0.03em] tabular-nums">
+              <span className="font-display mt-1 block text-3xl leading-none tracking-[-0.03em] tabular-nums phone:text-2xl">
                 {week === 0 ? "Day one" : `Week ${week}`}
                 <span className="text-faint"> / {WEEKS}</span>
               </span>
             </p>
           </div>
         </div>
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-8 phone:order-3">
           <BeforeAfter
             before="before-empty-yard"
             after="patio-firepit-house"
             label="Timarron courtyard"
-            className="aspect-[4/3] sm:aspect-[16/10]"
-            onChange={setPos}
+            className="aspect-[4/3] sm:aspect-[16/10] phone:!aspect-[16/10]"
+            onChange={(pos) => setG(Math.round((1 - pos / 100) * 50) / 50)}
           />
         </div>
       </div>

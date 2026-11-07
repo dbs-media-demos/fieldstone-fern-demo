@@ -33,26 +33,29 @@ export function GoogleG({ className }: { className?: string }) {
   );
 }
 
+const CARE_WORK = ["Weekly lawn care", "Spring cleanup", "Leaf removal", "Tree & shrub care"];
+
 const fmtDate = (d: string) => new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" });
 
 export function ReviewCard({ r, className, area }: { r: Review; className?: string; area?: string }) {
   return (
-    <figure className={clsx("flex h-full flex-col justify-between gap-6 rounded-[1.5rem] border border-line bg-bg p-6 sm:p-7", className)}>
+    <figure className={clsx("flex h-full flex-col justify-between gap-6 rounded-[1.5rem] border border-line bg-bg p-6 sm:p-7 phone:!gap-2.5 phone:!p-4", className)}>
       <div>
         <div className="flex items-center justify-between gap-4">
           <Stars n={r.rating} className="text-[#e3a008]" />
           <GoogleG className="h-5 w-5" />
         </div>
-        <blockquote className="mt-4 text-[1.05rem] leading-relaxed">&ldquo;{r.text}&rdquo;</blockquote>
+        <p className="t-eyebrow mt-3 hidden text-accent phone:block">{r.service}</p>
+        <blockquote className="mt-4 text-[1.05rem] leading-relaxed phone:!mt-1.5 phone:!text-[0.97rem] phone:!leading-snug">&ldquo;{r.text}&rdquo;</blockquote>
       </div>
       <figcaption className="flex items-center gap-3">
-        <span aria-hidden className="font-display flex h-10 w-10 items-center justify-center rounded-full bg-fern text-cream">
+        <span aria-hidden className="font-display flex h-10 w-10 items-center justify-center rounded-full bg-fern text-cream phone:!h-8 phone:!w-8 phone:shrink-0">
           {r.name[0]}
         </span>
         <span className="text-sm leading-tight">
           <span className="block font-semibold">{r.name}</span>
           <span className="text-muted">
-            {area ?? r.where} · {r.service} · {fmtDate(r.date)}
+            {area ?? r.where} <span className="phone:hidden">· {r.service} </span>· {fmtDate(r.date)}
           </span>
         </span>
       </figcaption>
@@ -66,24 +69,28 @@ export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
   const area = biz.preview ? biz.area : undefined;
   const a = reviews.slice(0, 6);
   const b = reviews.slice(6);
+  // Phones: the reviews that name a project first, in full; the rest to swipe through
+  const named = reviews.filter((r) => !CARE_WORK.includes(r.service));
+  const lead = named.slice(0, 3);
+  const rest = reviews.filter((r) => !lead.includes(r));
   return (
-    <div>
+    <div data-rise>
       <div className="wrap grid gap-8 lg:grid-cols-12 lg:items-end">
         <div className="lg:col-span-7">
           <Reveal as="p" className="t-eyebrow text-accent">
             {biz.preview ? "Reviews · samples" : "Reviews"}
           </Reveal>
-          <SplitReveal className="t-h2 mt-5 max-w-[16ch]">
+          <SplitReveal className="t-h2 mt-5 max-w-[16ch] phone:!max-w-none">
             {biz.preview && !biz.rating ? "Neighbors," : `${(biz.rating ?? site.rating).count} neighbors,`} <span className="t-italic">one</span> recurring theme: the same crew.
           </SplitReveal>
         </div>
         {biz.rating && (
           <Reveal className="flex items-center gap-5 lg:col-span-5 lg:justify-end" delay={0.1}>
-            <div className="flex items-center gap-4 rounded-[1.5rem] border border-line bg-bg px-6 py-5">
-              <GoogleG className="h-9 w-9" />
+            <div className="flex items-center gap-4 rounded-[1.5rem] border border-line bg-bg px-6 py-5 phone:!gap-3 phone:!rounded-[1.25rem] phone:!px-4 phone:!py-2.5">
+              <GoogleG className="h-9 w-9 phone:!h-7 phone:!w-7" />
               <div>
-                <p className="font-display text-5xl leading-none tracking-[-0.04em]">{biz.rating.value}</p>
-                <Stars className="mt-2 text-[#e3a008]" />
+                <p className="font-display text-5xl leading-none tracking-[-0.04em] phone:!text-3xl">{biz.rating.value}</p>
+                <Stars className="mt-2 text-[#e3a008] phone:!mt-0.5" />
               </div>
               <p className="max-w-[9rem] text-sm text-muted">from {biz.rating.count} Google reviews</p>
             </div>
@@ -91,7 +98,18 @@ export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
         )}
       </div>
 
-      <div className="marquee-wrap mt-14 space-y-5 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]">
+      <div className="wrap mt-4 hidden space-y-2.5 phone:block">
+        {lead.map((r) => (
+          <ReviewCard key={r.name} r={r} area={area} />
+        ))}
+      </div>
+      <div className="phone-swipe mt-2.5 hidden phone:!flex [--card:86vw]">
+        {rest.map((r) => (
+          <ReviewCard key={r.name} r={r} area={area} />
+        ))}
+      </div>
+
+      <div className="marquee-wrap mt-14 space-y-5 overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)] phone:!hidden">
         {[a, b].map((row, ri) => (
           <div key={ri} className={clsx("marquee flex w-max gap-5", ri && "marquee-rev")} style={{ ["--speed" as string]: ri ? "75s" : "65s" }}>
             {[...row, ...row].map((r, i) => (
@@ -100,11 +118,11 @@ export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
           </div>
         ))}
       </div>
-      <div className="wrap mt-10 flex items-end justify-between gap-6">
-        <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium">
+      <div className="wrap mt-10 flex items-end justify-between gap-6 phone:!mt-3">
+        <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 border-b border-current pb-1 font-medium phone:!min-h-9 phone:!text-sm">
           Read all reviews
         </Link>
-        <RakedLeaves className="h-auto w-40 shrink-0 sm:w-60" />
+        <RakedLeaves className="h-auto w-40 shrink-0 sm:w-60 phone:!h-8 phone:!w-24" />
       </div>
     </div>
   );
@@ -116,11 +134,11 @@ export function FaqList({ items, className }: { items: { q: string; a: string }[
     <div className={clsx("border-t border-line", className)}>
       {items.map((f) => (
         <details key={f.q} className="faq group border-b border-line">
-          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-5 text-left text-[1.15rem] font-medium tracking-[-0.01em] sm:text-xl [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-5 text-left text-[1.15rem] font-medium tracking-[-0.01em] sm:text-xl [&::-webkit-details-marker]:hidden phone:!min-h-12 phone:!gap-3 phone:!py-1.5 phone:!text-[0.98rem]">
             {f.q}
             <span
               aria-hidden
-              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line transition-colors duration-300 group-open:bg-forest group-open:text-cream"
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line transition-colors duration-300 group-open:bg-forest group-open:text-cream phone:!h-8 phone:!w-8"
             >
               <span className="absolute h-px w-3.5 bg-current" />
               <span className="absolute h-3.5 w-px bg-current transition-transform duration-500 group-open:rotate-90" />
@@ -138,7 +156,7 @@ export function FaqList({ items, className }: { items: { q: string; a: string }[
             </span>
           </summary>
           <div className="faq-body">
-            <p className="max-w-3xl pb-6 text-muted">{f.a}</p>
+            <p className="max-w-3xl pb-6 text-muted phone:!pb-3 phone:!text-[0.95rem]">{f.a}</p>
           </div>
         </details>
       ))}
@@ -156,11 +174,14 @@ export function CtaBand({
   text = "Free estimates, usually within the week. Twenty minutes, one designer, zero pressure.",
   image = "oak-bench",
   biz = defaultBiz,
+  formBelow,
 }: {
   title?: React.ReactNode;
   text?: string;
   image?: string;
   biz?: Biz;
+  /** The phone quote form follows, and the bar already calls: the band's own buttons step aside there. */
+  formBelow?: boolean;
 }) {
   return (
     <section className="theme-forest relative isolate overflow-hidden">
@@ -172,13 +193,13 @@ export function CtaBand({
           </div>
         </Parallax>
       </div>
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-forest/90 via-forest/60 to-forest/20" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-forest/90 via-forest/60 to-forest/20 phone:!from-forest/85 phone:!via-forest/75 phone:!to-forest/60" />
       <HedgeTrim className="absolute inset-x-0 bottom-0 -z-10 h-12 sm:h-16" />
-      <div className="wrap flex min-h-[78svh] flex-col justify-center py-24">
+      <div className="wrap flex min-h-[78svh] flex-col justify-center py-24 phone:!min-h-0 phone:!py-8 phone:!pb-14">
         <SplitReveal className="t-h1 max-w-[12ch] text-cream">{title}</SplitReveal>
-        <Reveal className="mt-8 max-w-md" delay={0.15}>
+        <Reveal className="mt-8 max-w-md phone:!mt-3" delay={0.15}>
           <p className="t-lead text-cream/85">{text}</p>
-          <div className="mt-9 flex flex-wrap gap-3">
+          <div className={clsx("mt-9 flex flex-wrap gap-3 phone:!mt-4 phone:!gap-2", formBelow && "phone:hidden")}>
             <Button href="/free-estimate" variant="lantern">
               Get a free estimate
             </Button>
@@ -198,12 +219,12 @@ export function CtaBand({
 export function CityMarquee() {
   const items = ["Southlake", "Keller", "Colleyville", "Grapevine", "Flower Mound", "Fort Worth", "Trophy Club", "Westlake"];
   return (
-    <div aria-hidden className="marquee-wrap overflow-hidden border-y border-line py-6">
-      <div className="marquee flex w-max items-center gap-10" style={{ ["--speed" as string]: "38s" }}>
+    <div aria-hidden className="marquee-wrap overflow-hidden border-y border-line py-6 phone:hidden">
+      <div className="city-list marquee flex w-max items-center gap-10" style={{ ["--speed" as string]: "38s" }}>
         {[...items, ...items].map((c, i) => (
-          <span key={i} className="flex items-center gap-10">
-            <span className="font-display text-[clamp(2rem,5vw,4.5rem)] leading-none tracking-[-0.035em]">{c}</span>
-            <svg viewBox="0 0 24 24" className="h-6 w-6 text-moss" fill="currentColor">
+          <span key={i} className="flex items-center gap-10 phone:!gap-2">
+            <span className="font-display text-[clamp(2rem,5vw,4.5rem)] leading-none tracking-[-0.035em] phone:!text-[0.95rem] phone:!tracking-normal">{c}</span>
+            <svg viewBox="0 0 24 24" className="h-6 w-6 text-moss phone:!h-2.5 phone:!w-2.5" fill="currentColor">
               <path d="M12 2c2 4 6 6 10 6-4 2-6 6-6 10-2-4-6-6-10-6 4-2 6-6 6-10Z" />
             </svg>
           </span>

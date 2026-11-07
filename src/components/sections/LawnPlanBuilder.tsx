@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { Button } from "@/components/ui/Button";
 import { acresLabel, estimate, frequencies, planServices, yard, type Frequency, type PlanServiceId } from "@/content/pricing";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { gsap, hasMotion, prefersReducedMotion, rafTween } from "@/lib/gsap";
 
 /** Deterministic pseudo-random points so server and client render the same yard. */
 const rand = (seed: number) => {
@@ -45,14 +45,16 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
       el.textContent = `$${est.monthly.toLocaleString("en-US")}`;
       return;
     }
+    const paint = (n: number) => {
+      el.textContent = `$${Math.round(n).toLocaleString("en-US")}`;
+    };
+    if (!hasMotion()) return rafTween(0.5, (t) => paint(from + (est.monthly - from) * t));
     const obj = { n: from };
     const tw = gsap.to(obj, {
       n: est.monthly,
       duration: 0.9,
       ease: "power3.out",
-      onUpdate: () => {
-        el.textContent = `$${Math.round(obj.n).toLocaleString("en-US")}`;
-      },
+      onUpdate: () => paint(obj.n),
     });
     return () => {
       tw.kill();
@@ -67,11 +69,11 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
   const quoteHref = `/free-estimate?services=lawn-care&size=${sqft}&freq=${freq}&plan=${selected.join(",")}`;
 
   return (
-    <div className={clsx("grid gap-10 lg:grid-cols-12 lg:gap-14", compact && "lg:items-center")}>
+    <div className={clsx("grid gap-10 lg:grid-cols-12 lg:gap-14 phone:!grid-cols-1 phone:!gap-3", compact && "lg:items-center")}>
       {/* Yard illustration */}
       <div className="lg:col-span-7">
-        <div className="relative overflow-hidden rounded-[2rem] bg-[#e7dcc4] p-3 shadow-[inset_0_0_0_1px_rgba(22,36,28,0.08)] sm:p-5">
-          <svg viewBox="0 0 480 360" className="block h-auto w-full" role="img" aria-labelledby={`${id}-svg`}>
+        <div className="relative overflow-hidden rounded-[2rem] bg-[#e7dcc4] p-3 shadow-[inset_0_0_0_1px_rgba(22,36,28,0.08)] sm:p-5 phone:!rounded-[1.25rem] phone:!p-2">
+          <svg viewBox="0 0 480 360" className="block h-auto w-full phone:mx-auto phone:!h-[12.5rem] phone:!w-auto" role="img" aria-labelledby={`${id}-svg`}>
             <title id={`${id}-svg`}>
               {`Top-down illustration of a ${sqft.toLocaleString("en-US")} square foot lawn with ${selected.length ? selected.join(", ") : "no services"} selected`}
             </title>
@@ -214,14 +216,14 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
             </g>
           </svg>
         </div>
-        <p className="mt-3 text-sm text-muted">
+        <p className="mt-3 text-sm text-muted phone:hidden">
           Illustration updates live: stripes for mowing, a crisp edge for edging, granules for feeding, and hedges that tidy up.
         </p>
       </div>
 
       {/* Controls */}
       <div className="lg:col-span-5">
-        <div className="space-y-8">
+        <div className="space-y-8 phone:!space-y-3">
           <div>
             <div className="flex items-baseline justify-between gap-4">
               <label htmlFor={`${id}-size`} className="t-eyebrow text-faint">
@@ -243,16 +245,16 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
               aria-valuetext={`${sqft.toLocaleString("en-US")} square feet, ${acresLabel(sqft)}`}
               style={{ ["--fill" as string]: fill }}
             />
-            <div className="flex justify-between text-xs text-faint">
+            <div className="flex justify-between text-xs text-faint phone:!-mt-1.5">
               <span>Townhome</span>
               <span>Half acre</span>
               <span>Estate</span>
             </div>
           </div>
 
-          <fieldset>
+          <fieldset className="min-w-0">
             <legend className="t-eyebrow text-faint">2 · Services</legend>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="no-scrollbar mt-3 flex flex-wrap gap-2 phone:!-mx-[var(--gutter)] phone:!mt-1.5 phone:!flex-nowrap phone:!gap-1 phone:!overflow-x-auto phone:!px-[var(--gutter)]">
               {planServices.map((s) => (
                 <button
                   key={s.id}
@@ -261,7 +263,7 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
                   onClick={() => toggle(s.id)}
                   title={s.note}
                   className={clsx(
-                    "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-[0.95rem] transition-all duration-300",
+                    "inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-[0.95rem] transition-all duration-300 phone:!min-h-10 phone:shrink-0 phone:!gap-1.5 phone:!px-3 phone:whitespace-nowrap phone:!text-[0.86rem]",
                     on(s.id) ? "border-fern bg-fern text-cream" : "border-line text-fg hover:border-fern/50",
                   )}
                 >
@@ -286,12 +288,12 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
 
           <fieldset>
             <legend className="t-eyebrow text-faint">3 · How often</legend>
-            <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-surface p-1" role="radiogroup">
+            <div className="mt-3 grid grid-cols-2 gap-1 rounded-full bg-surface p-1 phone:!mt-1.5" role="radiogroup">
               {frequencies.map((f) => (
                 <label
                   key={f.id}
                   className={clsx(
-                    "relative flex min-h-11 cursor-pointer items-center justify-center rounded-full text-[0.95rem] transition-colors duration-300 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-terracotta",
+                    "relative flex min-h-11 cursor-pointer items-center justify-center rounded-full text-[0.95rem] transition-colors duration-300 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-terracotta phone:!min-h-9",
                     freq === f.id ? "bg-forest text-cream" : "text-fg",
                   )}
                 >
@@ -300,23 +302,23 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
                 </label>
               ))}
             </div>
-            <p className="mt-2 text-sm text-muted">{frequencies.find((f) => f.id === freq)!.note}</p>
+            <p className="mt-2 text-sm text-muted phone:!mt-1 phone:!text-xs">{frequencies.find((f) => f.id === freq)!.note}</p>
           </fieldset>
 
-          <div className="rounded-[1.5rem] bg-forest p-6 text-cream sm:p-7">
+          <div className="rounded-[1.5rem] bg-forest p-6 text-cream sm:p-7 phone:!rounded-[1.25rem] phone:!p-3.5">
             <p className="t-eyebrow text-lantern">Estimated monthly</p>
-            <p className="mt-3 flex items-baseline gap-2" aria-live="polite">
-              <span ref={priceEl} className="font-display text-[clamp(3.2rem,6vw,5rem)] leading-none tracking-[-0.04em] tabular-nums">
+            <p className="mt-3 flex items-baseline gap-2 phone:!mt-1" aria-live="polite">
+              <span ref={priceEl} className="font-display text-[clamp(3.2rem,6vw,5rem)] leading-none tracking-[-0.04em] tabular-nums phone:!text-[2.3rem]">
                 ${est.monthly.toLocaleString("en-US")}
               </span>
               <span className="text-cream/70">/ month</span>
             </p>
-            <p className="mt-3 text-sm text-cream/75">
+            <p className="mt-3 text-sm text-cream/75 phone:!mt-1 phone:!text-xs">
               {selected.length === 0
                 ? "Pick at least one service to see an estimate."
                 : `≈ $${est.perVisit} per visit · ${est.visits} visits a month in season. Exact price after a free 20-minute yard walk.`}
             </p>
-            <Button href={quoteHref} variant="lantern" className="mt-6 w-full">
+            <Button href={quoteHref} variant="lantern" className="mt-6 w-full phone:!mt-2 phone:!min-h-11">
               Get my exact quote
             </Button>
           </div>

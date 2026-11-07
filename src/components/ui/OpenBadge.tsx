@@ -22,7 +22,7 @@ export function OpenBadge({ className }: { className?: string }) {
 
   if (!biz.hours) return null;
   return (
-    <span className={clsx("inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm", className)}>
+    <span className={clsx("inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-line px-3 py-1.5 text-sm", className)}>
       <span
         aria-hidden
         className={clsx("h-2 w-2 rounded-full", status ? (status.open ? "pulse-dot bg-[#5fbf6a] text-[#5fbf6a]" : "bg-terracotta-2") : "bg-sage")}

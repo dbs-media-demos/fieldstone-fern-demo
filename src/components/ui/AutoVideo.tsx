@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { prefersReducedMotion } from "@/lib/gsap";
+import { isPhone, prefersReducedMotion } from "@/lib/gsap";
 
 /**
  * Muted background loop that only loads once near the viewport, and never
- * autoplays with reduced motion or Save-Data (the poster stays instead).
+ * autoplays on phones, with reduced motion or Save-Data (the poster stays instead).
  */
 export function AutoVideo({ src, poster, className }: { src: string; poster: string; className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -13,7 +13,7 @@ export function AutoVideo({ src, poster, className }: { src: string; poster: str
 
   useEffect(() => {
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-    if (prefersReducedMotion() || conn?.saveData) return;
+    if (isPhone() || prefersReducedMotion() || conn?.saveData) return;
     const el = ref.current!;
     const io = new IntersectionObserver(
       ([e]) => {

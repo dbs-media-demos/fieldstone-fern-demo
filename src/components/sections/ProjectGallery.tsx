@@ -7,8 +7,9 @@ import { Photo } from "@/components/ui/Photo";
 import { Arrow } from "@/components/ui/Button";
 import { categories, gallery, projects, type Category } from "@/content/projects";
 import { alt as altFor } from "@/content/images";
+import gsap from "gsap";
 import { Flip } from "gsap/Flip";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { prefersReducedMotion } from "@/lib/gsap";
 
 // Flip is only needed here, so it stays out of the shared bundle.
 if (typeof window !== "undefined") gsap.registerPlugin(Flip);
@@ -102,12 +103,12 @@ export function ProjectGallery() {
         Showing {visibleIdx.length} photos
       </p>
 
-      <ul ref={grid} className="mt-10 columns-1 gap-5 sm:columns-2 lg:columns-3 [&>li]:mb-5">
+      <ul ref={grid} className="mt-10 columns-1 gap-5 sm:columns-2 lg:columns-3 [&>li]:mb-5 phone:!columns-2 phone:!gap-2.5 phone:[&>li]:!mb-2.5">
         {gallery.map((g, i) => {
           const tall = i % 5 === 1 || i % 7 === 3;
           const img = (
             <div className={clsx("relative overflow-hidden rounded-[1.25rem] bg-sand", tall ? "aspect-[3/4]" : i % 3 === 0 ? "aspect-[4/3]" : "aspect-square")}>
-              <Photo slug={g.img} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-105" />
+              <Photo slug={g.img} sizes="(min-width: 1024px) 33vw, 50vw" className="transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-105" />
             </div>
           );
           return (
@@ -123,9 +124,9 @@ export function ProjectGallery() {
                 aria-label={`Open photo: ${g.caption}`}
               >
                 {open === i ? img : <ViewTransition name={`gal-${g.id}`} share="morph" default="none">{img}</ViewTransition>}
-                <span className="mt-3 flex items-center justify-between gap-3 text-sm text-muted">
+                <span className="mt-3 flex items-center justify-between gap-3 text-sm text-muted phone:!mt-1 phone:!text-xs">
                   <span>{g.caption}</span>
-                  <span className="t-eyebrow text-faint">{categories.find((c) => c.id === g.category)?.label}</span>
+                  <span className="t-eyebrow text-faint phone:hidden">{categories.find((c) => c.id === g.category)?.label}</span>
                 </span>
               </button>
             </li>

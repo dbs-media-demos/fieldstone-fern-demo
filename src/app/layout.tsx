@@ -10,12 +10,15 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   style: ["normal", "italic"],
   display: "swap",
+  // Desktop only: phones use two small files of their own (globals.css), so nothing here may preload.
+  preload: false,
 });
 
 const hanken = Hanken_Grotesk({
   subsets: ["latin"],
   variable: "--font-hanken",
   display: "swap",
+  preload: false,
 });
 
 const dmMono = DM_Mono({
@@ -26,6 +29,8 @@ const dmMono = DM_Mono({
   // Small eyebrow labels only: not worth a preload on the critical path.
   preload: false,
 });
+
+const PHONE_ONLY = "(max-width: 767px), (hover: none) and (pointer: coarse)";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -59,6 +64,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
+        <link rel="preload" href="/fonts/fraunces-phone.woff2" as="font" type="font/woff2" crossOrigin="" media={PHONE_ONLY} />
+        <link rel="preload" href="/fonts/fraunces-italic-phone.woff2" as="font" type="font/woff2" crossOrigin="" media={PHONE_ONLY} />
         <SmoothScroll />
         {/* Header, footer and the rest come from (site)/layout or for/[token]/layout (SiteChrome) */}
         {children}

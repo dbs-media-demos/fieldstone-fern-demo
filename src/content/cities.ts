@@ -132,3 +132,7 @@ export const cities: City[] = [
 ];
 
 export const getCity = (slug: string) => cities.find((c) => c.slug === slug);
+
+/** What the map shows: passed from the server, so the cities' full copy stays out of the client bundle. */
+export type MapCity = Pick<City, "slug" | "name" | "map" | "drive" | "hero" | "neighborhoods" | "yards">;
+export const mapCities: MapCity[] = cities.map(({ slug, name, map, drive, hero, neighborhoods, yards }) => ({ slug, name, map, drive, hero, neighborhoods, yards }));

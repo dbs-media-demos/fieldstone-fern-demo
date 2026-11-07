@@ -10,10 +10,9 @@ import { Photo } from "@/components/ui/Photo";
 import { nav } from "@/content/site";
 import { useBiz } from "@/components/preview/BizContext";
 import { telOf } from "@/lib/biz-core";
-import { services } from "@/content/services";
-import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { gsap, hasMotion, prefersReducedMotion } from "@/lib/gsap";
 
-export function Header() {
+export function Header({ services }: { services: { slug: string; short: string }[] }) {
   const biz = useBiz();
   const telHref = telOf(biz) ?? "";
   const pathname = usePathname();
@@ -64,7 +63,7 @@ export function Header() {
     if (open) {
       window.__lenis?.stop();
       document.documentElement.style.overflow = "hidden";
-      if (!prefersReducedMotion()) {
+      if (hasMotion() && !prefersReducedMotion()) {
         gsap.fromTo(el, { clipPath: "circle(0% at 100% 0%)" }, { clipPath: "circle(150% at 100% 0%)", duration: 1, ease: "expo.inOut" });
         gsap.fromTo(el.querySelectorAll("[data-m]"), { yPercent: 110 }, { yPercent: 0, duration: 1.1, stagger: 0.05, delay: 0.25, ease: "expo.out" });
       }
@@ -95,8 +94,8 @@ export function Header() {
         className={clsx(
           "fixed inset-x-0 top-0 z-50 transition-[transform,background-color,color,box-shadow] duration-500 ease-[var(--ease-out-expo)]",
           hidden && !open ? "-translate-y-full" : "translate-y-0",
-          solid && "bg-cream/88 text-forest shadow-[0_1px_0_rgba(22,36,28,0.08)] backdrop-blur-xl",
-          tinted && "bg-forest/55 text-cream backdrop-blur-xl",
+          solid && "bg-cream/88 text-forest shadow-[0_1px_0_rgba(22,36,28,0.08)] backdrop-blur-xl phone:bg-cream phone:backdrop-blur-none",
+          tinted && "bg-forest/55 text-cream backdrop-blur-xl phone:bg-forest phone:backdrop-blur-none",
           !solid && !tinted && "text-cream",
         )}
       >

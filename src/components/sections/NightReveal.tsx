@@ -25,6 +25,7 @@ const FIXTURES = [
 
 const START_MIN = 19 * 60 + 48; // 7:48 pm
 const END_MIN = 21 * 60 + 12; // 9:12 pm
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 const clock = (p: number) => {
   const m = Math.round(START_MIN + (END_MIN - START_MIN) * p);
   const h = Math.floor(m / 60) % 12 || 12;
@@ -56,13 +57,13 @@ export function NightReveal() {
     const n = FIXTURES.length;
     FIXTURES.forEach((f, i) => {
       const s = 0.12 + (i / n) * 0.62;
-      const t = gsap.utils.clamp(0, 1, (progress - s) / 0.1);
+      const t = clamp01((progress - s) / 0.1);
       const flicker = t > 0 && t < 1 ? 0.85 + 0.15 * Math.sin(t * 40) : 1;
       el.style.setProperty(`--r${i}`, `${(f.r * t * flicker).toFixed(2)}%`);
       el.style.setProperty(`--g${i}`, (t * flicker).toFixed(3));
     });
-    el.style.setProperty("--sunset", String(gsap.utils.clamp(0, 1, 1 - progress / 0.14)));
-    el.style.setProperty("--all", String(gsap.utils.clamp(0, 1, (progress - 0.78) / 0.2)));
+    el.style.setProperty("--sunset", String(clamp01(1 - progress / 0.14)));
+    el.style.setProperty("--all", String(clamp01((progress - 0.78) / 0.2)));
     const lit = FIXTURES.filter((_, i) => progress >= 0.12 + (i / n) * 0.62 + 0.05).length;
     const readout = root.current?.querySelector("[data-readout]");
     if (readout) readout.textContent = `${clock(progress)} · ${lit}/${n} fixtures on`;
@@ -107,10 +108,10 @@ export function NightReveal() {
 
   return (
     <div>
-      <section ref={root} aria-labelledby="night-title" className="theme-forest relative h-[100svh] min-h-[620px] overflow-hidden bg-[#0b1218]">
+      <section ref={root} aria-labelledby="night-title" className="night-section theme-forest relative h-[100svh] min-h-[620px] overflow-hidden bg-[#0b1218]">
         <div
           ref={stage}
-          className="absolute left-1/2 top-1/2 aspect-[2000/1335] w-[max(100vw,149.8svh)] -translate-x-1/2 -translate-y-1/2"
+          className="night-stage absolute left-1/2 top-1/2 aspect-[2000/1335] w-[max(100vw,149.8svh)] -translate-x-1/2 -translate-y-1/2"
           style={
             {
               ...Object.fromEntries(
@@ -126,7 +127,7 @@ export function NightReveal() {
         >
           {/* Unlit: the same photo, darkened and cooled (static filter, never tweened). */}
           <div className="absolute inset-0 [filter:brightness(0.3)_saturate(0.45)_contrast(1.08)]">
-            <Photo slug="night-reveal" sizes="(min-width: 768px) 100vw, 150vh" quality={75} decorative />
+            <Photo slug="night-reveal" sizes="100vw" quality={75} decorative />
           </div>
           <div className="absolute inset-0 bg-[#10203a] mix-blend-multiply opacity-60" />
           {/* Sunset glow that fades as evening falls */}
@@ -139,11 +140,11 @@ export function NightReveal() {
           />
           {/* Lit photo through light pools */}
           <div className="absolute inset-0" style={{ WebkitMaskImage: mask, maskImage: mask }}>
-            <Photo slug="night-reveal" sizes="(min-width: 768px) 100vw, 150vh" quality={75} alt="Home at dusk with landscape lighting on" />
+            <Photo slug="night-reveal" sizes="100vw" quality={75} alt="Home at dusk with landscape lighting on" />
           </div>
           {/* Full scene once every fixture is on */}
           <div className="absolute inset-0" style={{ opacity: "var(--all)" }}>
-            <Photo slug="night-reveal" sizes="(min-width: 768px) 100vw, 150vh" quality={75} decorative />
+            <Photo slug="night-reveal" sizes="100vw" quality={75} decorative />
           </div>
           {/* Fixture glows */}
           {FIXTURES.map((f, i) =>
@@ -164,22 +165,22 @@ export function NightReveal() {
           )}
         </div>
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0b1218]/80 via-transparent to-[#0b1218]/85" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0b1218]/80 via-transparent to-[#0b1218]/85 phone:hidden" />
 
-        <div className="wrap relative flex h-full flex-col justify-between pb-8 pt-[calc(var(--header-h)+1.5rem)]">
-          <div className="max-w-xl">
+        <div className="night-body wrap relative flex h-full flex-col justify-between pb-8 pt-[calc(var(--header-h)+1.5rem)]">
+          <div className="night-head max-w-xl">
             <p className="t-eyebrow text-lantern">Outdoor lighting</p>
             <h2 id="night-title" className="t-h2 mt-4 text-cream">
               Your yard shouldn&rsquo;t <span className="t-italic text-lantern">disappear</span> at sunset.
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
+          <div className="night-controls grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
             <div className="max-w-md">
               <p className="font-mono text-sm tracking-wide text-lantern" data-readout aria-live="off">
                 9:12 pm · 14/14 fixtures on
               </p>
-              <label htmlFor="night-range" className="mt-4 block text-sm text-cream/75">
+              <label htmlFor="night-range" className="mt-4 block text-sm text-cream/75 phone:!mt-1">
                 Drag from sunset to full evening
               </label>
               <input
@@ -192,14 +193,14 @@ export function NightReveal() {
                 defaultValue={1}
                 onChange={(e) => onRange(Number(e.target.value))}
                 aria-valuetext={clock(1)}
-                className="night-range mt-3 w-full max-w-sm"
+                className="night-range mt-3 w-full max-w-sm phone:!mt-0 phone:!max-w-none"
               />
             </div>
-            <div className="flex flex-wrap gap-3 md:justify-end">
-              <p className="max-w-xs text-sm text-cream/75 md:text-right">
+            <div className="flex flex-wrap gap-3 md:justify-end phone:!gap-2.5">
+              <p className="max-w-xs text-sm text-cream/75 md:text-right phone:!max-w-none phone:!text-left">
                 Warm 2700K brass fixtures, zero glare, on a smart timer. We&rsquo;ll show you in your own yard, after dark.
               </p>
-              <Button href="/services/outdoor-lighting" variant="lantern" className="pointer-events-auto">
+              <Button href="/services/outdoor-lighting" variant="lantern" className="pointer-events-auto phone:!min-h-10 phone:!py-2">
                 Book a night demo
               </Button>
             </div>
