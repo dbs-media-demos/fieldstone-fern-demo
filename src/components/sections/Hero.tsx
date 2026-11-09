@@ -9,7 +9,7 @@ import { useBiz } from "@/components/preview/BizContext";
 import { alt as altFor, imgSrc } from "@/content/images";
 import { telOf } from "@/lib/biz-core";
 import { gsap, useGSAP, isPhone, loadMotion, prefersReducedMotion } from "@/lib/gsap";
-import { after3DGate } from "@/lib/three-gate";
+import { after3DGate, demote3D, queue3D } from "@/lib/three-gate";
 import type { HeroLawn } from "@/components/fx/lawn3d/HeroLawnScene";
 
 type Grass = ComponentType<{ mow: RefObject<{ p: number }>; className?: string }>;
@@ -32,7 +32,9 @@ const upTo = (max: number) =>
  * The centrepiece is a real-time 3D lawn (three.js, desktop only): a crew member on a ride-on
  * mower half way through the job. The same scroll drives it down three lanes, cutting stripes and
  * throwing clippings: "Grown" on arrival, "Kept" as you scroll. A still rendered from that scene
- * is in the server HTML; the canvas fades in over it once the 3D gate passes after load. Desktops
+ * is in the server HTML; the canvas fades in over it once the 3D gate passes after load and the scene
+ * is compiled and has drawn a frame unseen. If its first 2 s run slow it fades back to the still,
+ * frees the GPU and the rest of the visit stays on stills. Desktops
  * that fail the gate (narrow, reduced motion, no WebGL2) keep the still, or get the light 2D grass.
  *
  * Phones: none of that. A still of a real project, service + town in the headline, the rating and
@@ -54,18 +56,35 @@ export function Hero() {
     let lawn: HeroLawn | null = null;
     let disposed = false;
     let detach = () => {};
+    let drop = 0;
     const cancel = after3DGate(
-      async () => {
+      () => void queue3D(async () => {
         const { createHeroLawn } = await import("@/components/fx/lawn3d/HeroLawnScene");
         const cv = lawnCanvas.current;
         const host = root.current;
         if (disposed || !cv || !host) return;
         try {
-          lawn = createHeroLawn(cv, { progress: () => mow.current.p, onFirstFrame: () => setLawnLive(true) });
+          lawn = await createHeroLawn(cv, {
+            progress: () => mow.current.p,
+            onReady: () => !disposed && setLawnLive(true),
+            // too slow for this machine: back to the still for the rest of the visit, then free the GPU
+            onSlow: () => {
+              demote3D();
+              detach();
+              lawn?.setVisible(false); // freeze on the last frame while it fades out
+              setLawnLive(false);
+              drop = window.setTimeout(() => {
+                lawn?.dispose();
+                lawn = null;
+              }, 1500);
+            },
+          });
         } catch {
-          return; // no WebGL after all: the still stays
+          demote3D(); // no WebGL or no proper GPU: the still stays, and so do the others
+          return;
         }
         const l = lawn;
+        if (disposed) return l.dispose();
         const onMove = (e: PointerEvent) => {
           const r = cv.getBoundingClientRect();
           l.setPointer(e.clientX - r.left, e.clientY - r.top);
@@ -83,7 +102,8 @@ export function Hero() {
           io.disconnect();
           ro.disconnect();
         };
-      },
+        await l.settled;
+      }),
       () => {
         if (prefersReducedMotion()) return; // the still is the reduced-motion frame
         void Promise.all([import("@/components/fx/HeroGrass"), loadMotion()]).then(([m]) => !disposed && setGrass(() => m.HeroGrass));
@@ -93,6 +113,7 @@ export function Hero() {
       disposed = true;
       cancel();
       detach();
+      window.clearTimeout(drop);
       lawn?.dispose();
     };
   }, []);

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createMower } from "./mower";
+import { MAX_DPR, breathe, frameWatch, gpuRenderer, warmUp } from "./smooth";
 
 /**
  * Hero centrepiece (desktop only, loaded behind the 3D gate in Hero.tsx).
@@ -10,7 +11,9 @@ import { createMower } from "./mower";
  * the way it drove) and throwing clippings from the side chute. Scroll back and the grass grows
  * in again behind it. The pointer parts the grass and leans the camera a little.
  *
- * Renders only while on screen and the tab is visible.
+ * Renders only while on screen and the tab is visible. Nothing shows until every shader is compiled
+ * and one frame has been drawn unseen (`onReady`); the first 2 s of live frames are watched, and a
+ * scene that can't keep up calls `onSlow` so the caller can fade back to the still.
  */
 export type HeroLawn = {
   setProgress: (p: number) => void;
@@ -18,6 +21,8 @@ export type HeroLawn = {
   clearPointer: () => void;
   setVisible: (v: boolean) => void;
   resize: () => void;
+  /** Resolves once the first seconds of live frames have been judged. */
+  settled: Promise<void>;
   /** One fully grown frame at a given path position (for the phone and fallback stills). */
   still: (s: number, view?: Partial<typeof CAM>) => void;
   dispose: () => void;
@@ -50,8 +55,9 @@ float cutAt(vec2 p, float lane) {
 
 const easeOut = (t: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
-export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () => number; onFirstFrame?: () => void } = {}): HeroLawn {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+/** Built in short slices (it yields between parts), so creating it never blocks the page for long. */
+export async function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () => number; onReady?: () => void; onSlow?: () => void } = {}): Promise<HeroLawn> {
+  const renderer = gpuRenderer(canvas, { antialias: true, alpha: true });
   renderer.debug.checkShaderErrors = false;
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -107,6 +113,7 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
     uSoil: { value: new THREE.Color("#2a3a20") },
   };
 
+  await breathe();
   // ── grass ──
   const N = 100000;
   const blade = new THREE.PlaneGeometry(1, 1, 1, 5);
@@ -121,6 +128,7 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
   const dNear = CAM.z - Z_NEAR + 0.4;
   const dFar = CAM.z - Z_FAR;
   for (let i = 0; i < N; i++) {
+    if ((i & 0x3fff) === 0x3fff) await breathe();
     // density ∝ 1/d² on the ground → even on screen
     const d = dNear * Math.pow(dFar / dNear, Math.random());
     const z = CAM.z - d;
@@ -238,6 +246,7 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
   grass.receiveShadow = true;
   scene.add(grass);
 
+  await breathe();
   // ── ground: soil under the meadow, striped where cut, fading out into the distance ──
   const groundGeo = new THREE.PlaneGeometry(40, Z_NEAR - Z_FAR + 6, 1, 1);
   groundGeo.rotateX(-Math.PI / 2);
@@ -271,12 +280,14 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
   ground.renderOrder = -1;
   scene.add(ground);
 
+  await breathe();
   // ── mower ──
   const mower = createMower();
   scene.add(mower.group);
   const mowerScale = 1;
   mower.group.scale.setScalar(mowerScale);
 
+  await breathe();
   // ── clippings ──
   const MAXC = 700;
   const clipGeo = new THREE.PlaneGeometry(0.07, 0.016);
@@ -309,7 +320,7 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
 
   let W = 1;
   let H = 1;
-  let dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  let dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
   const resize = () => {
     const r = canvas.getBoundingClientRect();
     W = Math.max(1, r.width);
@@ -441,9 +452,12 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
 
   const render = () => renderer.render(scene, camera);
 
-  const tick = () => {
+  const watch = frameWatch(() => opts.onSlow?.());
+
+  const tick = (now: number) => {
     raf = 0;
-    if (disposed || !visible || document.hidden) return;
+    if (disposed || !visible || document.hidden) return watch.pause();
+    watch.frame(now);
     const t0 = performance.now();
     clock.update();
     const dt = Math.min(0.05, clock.getDelta());
@@ -465,7 +479,6 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
     stepClips(dt);
     updateCamera(dt);
     render();
-    if (frames === 0) opts.onFirstFrame?.();
 
     // keep it smooth on slower GPUs: drop resolution if frames run long
     frames++;
@@ -482,24 +495,25 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
   const start = () => {
     if (!raf && visible && !disposed && ready) {
       clock.reset();
+      watch.pause();
       raf = requestAnimationFrame(tick);
     }
   };
-  const onVis = () => (document.hidden ? undefined : start());
+  const onVis = () => (document.hidden ? watch.pause() : start());
   document.addEventListener("visibilitychange", onVis);
 
   resize();
   updateCamera(0);
   place(0);
-  // compile every shader off the main thread where the driver allows it, then start drawing
+  // compile every shader (off the main thread where the driver allows it) and draw one frame unseen,
+  // then show it and start the loop
   let ready = false;
-  void renderer
-    .compileAsync(scene, camera)
-    .catch(() => {})
-    .then(() => {
-      ready = true;
-      if (!disposed) start();
-    });
+  void warmUp(renderer, scene, camera, render).then(() => {
+    if (disposed) return;
+    ready = true;
+    opts.onReady?.();
+    start();
+  });
 
   return {
     setProgress(p) {
@@ -517,6 +531,7 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
       if (v) start();
     },
     resize,
+    settled: watch.settled,
     still(at, v) {
       ready = true;
       if (v) {
@@ -546,6 +561,7 @@ export function createHeroLawn(canvas: HTMLCanvasElement, opts: { progress?: () 
       render();
     },
     dispose() {
+      if (disposed) return;
       disposed = true;
       cancelAnimationFrame(raf);
       document.removeEventListener("visibilitychange", onVis);

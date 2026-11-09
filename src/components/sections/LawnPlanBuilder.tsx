@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { Button } from "@/components/ui/Button";
 import { acresLabel, estimate, frequencies, planServices, yard, type Frequency, type PlanServiceId } from "@/content/pricing";
 import { gsap, hasMotion, prefersReducedMotion, rafTween } from "@/lib/gsap";
-import { after3DGate } from "@/lib/three-gate";
+import { after3DGate, demote3D, queue3D } from "@/lib/three-gate";
 import type { Yard, YardLayer } from "@/components/fx/lawn3d/YardScene";
 
 /** Thousands separators without Intl (cheap during hydration). */
@@ -27,6 +27,8 @@ const LAYERS: { id: YardLayer; when: (on: (s: PlanServiceId) => boolean) => bool
  * The yard: a 3D scale model of a house on its lot (three.js, desktop only, behind the 3D gate)
  * that the controls act on. The server HTML, phones and anything that fails the gate get the
  * same model as still layers rendered from the scene, cross-faded as services are toggled.
+ * The model is built and compiled while the browser is idle after load (after the hero has settled),
+ * so reaching it never hitches; if its first seconds on screen run slow it fades back to the stills.
  */
 function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServiceId[]; weekly: boolean }) {
   const box = useRef<HTMLDivElement>(null);
@@ -49,7 +51,7 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
   useEffect(() => {
     let disposed = false;
     let detach = () => {};
-    let near: IntersectionObserver | null = null;
+    let drop = 0;
     const create = async () => {
       const { createYard } = await import("@/components/fx/lawn3d/YardScene");
       const cv = canvas.current;
@@ -57,13 +59,26 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
       if (disposed || !cv || !host) return;
       let y: Yard;
       try {
-        y = createYard(cv);
+        y = await createYard(cv, {
+          // too slow for this machine: back to the stills for the rest of the visit, then free the GPU
+          onSlow: () => {
+            demote3D();
+            detach();
+            y.setVisible(false); // freeze on the last frame while it fades out
+            setLive(false);
+            drop = window.setTimeout(() => {
+              y.dispose();
+              if (yardRef.current === y) yardRef.current = null;
+            }, 900);
+          },
+        });
       } catch {
-        return; // no WebGL after all: the stills stay
+        demote3D(); // no WebGL or no proper GPU: the stills stay, and so do the others
+        return;
       }
+      if (disposed) return y.dispose();
       yardRef.current = y;
       y.set(stateRef.current);
-      requestAnimationFrame(() => !disposed && setLive(true));
       const onMove = (e: PointerEvent) => {
         const r = host.getBoundingClientRect();
         y.setPointer(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1);
@@ -94,24 +109,16 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
         io.disconnect();
         ro.disconnect();
       };
+      // compiled and drawn once unseen: now it may show (usually long before the visitor gets here)
+      await y.ready;
+      if (!disposed && yardRef.current === y) setLive(true);
     };
-    // past the gate, build the model only once the builder is about a screen away
-    const cancel = after3DGate(() => {
-      if (disposed || !box.current) return;
-      near = new IntersectionObserver(
-        ([en]) => {
-          if (!en.isIntersecting) return;
-          near?.disconnect();
-          void create();
-        },
-        { rootMargin: "100% 0px" },
-      );
-      near.observe(box.current);
-    });
+    // past the gate, warm the model up in idle time, after the hero has settled
+    const cancel = after3DGate(() => void queue3D(create));
     return () => {
       disposed = true;
       cancel();
-      near?.disconnect();
+      window.clearTimeout(drop);
       detach();
       yardRef.current?.dispose();
       yardRef.current = null;

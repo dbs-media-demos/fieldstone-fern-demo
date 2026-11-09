@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { createMower } from "./mower";
+import { MAX_DPR, breathe, frameWatch, gpuRenderer, warmUp } from "./smooth";
 
 /**
  * The lawn-plan builder's yard as a 3D scale model (desktop only, behind the 3D gate).
@@ -15,6 +16,10 @@ import { createMower } from "./mower";
  *
  * `renderLayer` draws one part on its own over transparent (with the rest as invisible occluders),
  * which is how the phone and fallback stills are made: the same layers, cross-faded with CSS.
+ *
+ * Built ahead of time (while the browser is idle), it shows nothing until every shader is compiled
+ * and one frame has been drawn unseen (`ready`). Its first 2 s on screen are watched, and if they
+ * run slow `onSlow` lets the caller fade back to the stills.
  */
 export type YardState = {
   size: number; // 0..1 along the slider
@@ -36,6 +41,8 @@ export type Yard = {
   setVisible: (v: boolean) => void;
   resize: () => void;
   renderLayer: (layer: YardLayer) => void;
+  /** Resolves once the model is compiled and has drawn its first frame unseen. */
+  ready: Promise<void>;
   dispose: () => void;
 };
 
@@ -62,8 +69,9 @@ const lawnFor = (size: number) => {
   return { x0: LAWN.x1 - w, x1: LAWN.x1, z0: LAWN.z0, z1: LAWN.z0 + d };
 };
 
-export function createYard(canvas: HTMLCanvasElement): Yard {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+/** Built in short slices (it yields between parts), so creating it never blocks the page for long. */
+export async function createYard(canvas: HTMLCanvasElement, opts: { onSlow?: () => void } = {}): Promise<Yard> {
+  const renderer = gpuRenderer(canvas, { antialias: true, alpha: true });
   renderer.debug.checkShaderErrors = false;
   renderer.setClearColor(0x000000, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -141,6 +149,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
     }
   `;
 
+  await breathe();
   // ── the lot: soil block with a turf skin, cut like an architect's model ──
   const lot = new THREE.Group();
   scene.add(lot);
@@ -160,6 +169,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   catcher.receiveShadow = true;
   scene.add(tag(catcher, "base", false, true));
 
+  await breathe();
   // ── lawn: a plane coloured by the shader, plus short instanced blades for texture ──
   const lawnMat = std("#ffffff", 0.95);
   lawnMat.onBeforeCompile = (sh) => {
@@ -238,6 +248,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   grass.frustumCulled = false;
   scene.add(tag(grass, "mow", false, true));
 
+  await breathe();
   // ── house: limestone ranch with a hip roof, garage, door, windows ──
   const house = new THREE.Group();
   const hw = HOUSE.x1 - HOUSE.x0;
@@ -299,6 +310,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   house.add(porch);
   scene.add(tag(house, "base", true, true));
 
+  await breathe();
   // ── hard surfaces: drive, walk, stepping stones, sidewalk ──
   const hard = new THREE.Group();
   const concrete = std("#d8d0c0", 0.92);
@@ -319,6 +331,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   hard.add(sidewalk);
   scene.add(tag(hard, "base", false, true));
 
+  await breathe();
   // ── beds: mulch along the house, the side bed and the verge, with shrubs and two trees ──
   const beds = new THREE.Group();
   const mulch = std("#4b3527", 1);
@@ -373,6 +386,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   }
   scene.add(tag(beds, "base", true, true));
 
+  await breathe();
   // ── hedges: foundation row + the long property hedge on the left; shaggy ↔ clipped ──
   type Hedge = { x: number; z: number; len: number; alongX: boolean; h: number; d: number };
   const hedgeSpecs = (L: ReturnType<typeof lawnFor>): Hedge[] => {
@@ -408,6 +422,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   tag(coreWild, "hedgeWild", true, true);
   tag(wildBlobs, "hedgeWild", true, true);
 
+  await breathe();
   // ── edging: ragged tufts over the bed lines, or a clean cut with a steel edge ──
   const TUFTS = 150;
   const tuftCone = G(new THREE.ConeGeometry(0.07, 0.24, 5));
@@ -431,6 +446,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   }
   scene.add(tag(edgeG, "edgeClean", false, true));
 
+  await breathe();
   // ── weeds: dandelions (rosette, stem, flower) ──
   const WEEDS = 22;
   const rosetteGeo = G(new THREE.SphereGeometry(0.11, 8, 4));
@@ -450,6 +466,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   weedG.add(weedRos, weedStem, weedHead);
   scene.add(tag(weedG, "weeds", false, true));
 
+  await breathe();
   // ── fertilizer granules ──
   const GRAN = 230;
   const granules = new THREE.InstancedMesh(G(new THREE.SphereGeometry(0.02, 6, 4)), std("#e9e4d6", 0.5), GRAN);
@@ -460,6 +477,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   });
   scene.add(tag(granules, "fert", false, false));
 
+  await breathe();
   // ── the mower (a crew member on the ride-on, at model scale) ──
   const mower = createMower();
   mower.group.scale.setScalar(0.66);
@@ -690,7 +708,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
     const r = canvas.getBoundingClientRect();
     W = Math.max(1, r.width);
     H = Math.max(1, r.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
     renderer.setSize(W, H, false);
     camera.aspect = W / H;
     camera.updateProjectionMatrix();
@@ -762,9 +780,12 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
     return anim;
   };
 
-  const tick = () => {
+  const watch = frameWatch(() => opts.onSlow?.());
+
+  const tick = (now: number) => {
     raf = 0;
-    if (disposed || !visible || document.hidden) return;
+    if (disposed || !visible || document.hidden) return watch.pause();
+    watch.frame(now);
     clock.update();
     const dt = Math.min(0.05, clock.getDelta());
     const anim = step(dt);
@@ -778,10 +799,11 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   const start = () => {
     if (!raf && visible && !disposed && ready) {
       clock.reset();
+      watch.pause();
       raf = requestAnimationFrame(tick);
     }
   };
-  const onVis = () => (document.hidden ? undefined : start());
+  const onVis = () => (document.hidden ? watch.pause() : start());
   document.addEventListener("visibilitychange", onVis);
 
   resize();
@@ -789,14 +811,12 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
   step(0);
   updateCamera(1);
   let ready = false;
-  void renderer
-    .compileAsync(scene, camera)
-    .catch(() => {})
-    .then(() => {
-      ready = true;
-      needs = 2;
-      if (!disposed) start();
-    });
+  const warm = warmUp(renderer, scene, camera, () => renderer.render(scene, camera)).then(() => {
+    if (disposed) return;
+    ready = true;
+    needs = 2;
+    start();
+  });
 
   // depth-only stand-in used when a layer is drawn on its own
   const occluder = M(new THREE.MeshBasicMaterial({ colorWrite: false }));
@@ -829,6 +849,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
       if (v) start();
     },
     resize,
+    ready: warm,
     renderLayer(layer) {
       cancelAnimationFrame(raf);
       raf = 0;
@@ -903,6 +924,7 @@ export function createYard(canvas: HTMLCanvasElement): Yard {
       catcher.position.y = -0.58;
     },
     dispose() {
+      if (disposed) return;
       disposed = true;
       cancelAnimationFrame(raf);
       document.removeEventListener("visibilitychange", onVis);
