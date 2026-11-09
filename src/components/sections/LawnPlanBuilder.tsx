@@ -5,23 +5,152 @@ import clsx from "clsx";
 import { Button } from "@/components/ui/Button";
 import { acresLabel, estimate, frequencies, planServices, yard, type Frequency, type PlanServiceId } from "@/content/pricing";
 import { gsap, hasMotion, prefersReducedMotion, rafTween } from "@/lib/gsap";
+import { after3DGate } from "@/lib/three-gate";
+import type { Yard, YardLayer } from "@/components/fx/lawn3d/YardScene";
 
-/** Deterministic pseudo-random points so server and client render the same yard. */
-const rand = (seed: number) => {
-  let s = seed;
-  return () => {
-    s = (s * 16807) % 2147483647;
-    return (s - 1) / 2147483646;
+/** Thousands separators without Intl (cheap during hydration). */
+const commas = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+/** Which still layers (rendered from the 3D yard) show for the chosen services, bottom to top. */
+const LAYERS: { id: YardLayer; when: (on: (s: PlanServiceId) => boolean) => boolean }[] = [
+  { id: "base", when: () => true },
+  { id: "mow", when: (on) => on("mowing") },
+  { id: "edgeRagged", when: (on) => !on("edging") },
+  { id: "edgeClean", when: (on) => on("edging") },
+  { id: "weeds", when: (on) => !on("weeds") },
+  { id: "fert", when: (on) => on("fertilization") },
+  { id: "hedgeWild", when: (on) => !on("hedges") },
+  { id: "hedgeClipped", when: (on) => on("hedges") },
+];
+
+/**
+ * The yard: a 3D scale model of a house on its lot (three.js, desktop only, behind the 3D gate)
+ * that the controls act on. The server HTML, phones and anything that fails the gate get the
+ * same model as still layers rendered from the scene, cross-faded as services are toggled.
+ */
+function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServiceId[]; weekly: boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const yardRef = useRef<Yard | null>(null);
+  const [live, setLive] = useState(false);
+  const on = (s: PlanServiceId) => selected.includes(s);
+  const size = (sqft - yard.min) / (yard.max - yard.min);
+  const state = {
+    size,
+    mowing: on("mowing"),
+    edging: on("edging"),
+    fertilization: on("fertilization"),
+    weeds: on("weeds"),
+    hedges: on("hedges"),
+    weekly,
   };
-};
-const r1 = rand(11);
-const FERT = Array.from({ length: 34 }, () => ({ x: 40 + r1() * 250, y: 122 + r1() * 216 }));
-const r2 = rand(29);
-const WEEDS = Array.from({ length: 11 }, () => ({ x: 50 + r2() * 230, y: 132 + r2() * 196 }));
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    let disposed = false;
+    let detach = () => {};
+    let near: IntersectionObserver | null = null;
+    const create = async () => {
+      const { createYard } = await import("@/components/fx/lawn3d/YardScene");
+      const cv = canvas.current;
+      const host = box.current;
+      if (disposed || !cv || !host) return;
+      let y: Yard;
+      try {
+        y = createYard(cv);
+      } catch {
+        return; // no WebGL after all: the stills stay
+      }
+      yardRef.current = y;
+      y.set(stateRef.current);
+      requestAnimationFrame(() => !disposed && setLive(true));
+      const onMove = (e: PointerEvent) => {
+        const r = host.getBoundingClientRect();
+        y.setPointer(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1);
+      };
+      const onLeave = () => y.clearPointer();
+      let frame = 0;
+      const onScroll = () => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const r = host.getBoundingClientRect();
+          y.setScroll(Math.min(1, Math.max(0, (window.innerHeight - r.top) / (window.innerHeight + r.height))));
+        });
+      };
+      const io = new IntersectionObserver(([en]) => y.setVisible(en.isIntersecting), { rootMargin: "120px" });
+      const ro = new ResizeObserver(() => y.resize());
+      host.addEventListener("pointermove", onMove);
+      host.addEventListener("pointerleave", onLeave);
+      window.addEventListener("scroll", onScroll, { passive: true });
+      io.observe(host);
+      ro.observe(cv);
+      onScroll();
+      detach = () => {
+        cancelAnimationFrame(frame);
+        host.removeEventListener("pointermove", onMove);
+        host.removeEventListener("pointerleave", onLeave);
+        window.removeEventListener("scroll", onScroll);
+        io.disconnect();
+        ro.disconnect();
+      };
+    };
+    // past the gate, build the model only once the builder is about a screen away
+    const cancel = after3DGate(() => {
+      if (disposed || !box.current) return;
+      near = new IntersectionObserver(
+        ([en]) => {
+          if (!en.isIntersecting) return;
+          near?.disconnect();
+          void create();
+        },
+        { rootMargin: "100% 0px" },
+      );
+      near.observe(box.current);
+    });
+    return () => {
+      disposed = true;
+      cancel();
+      near?.disconnect();
+      detach();
+      yardRef.current?.dispose();
+      yardRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    stateRef.current = state;
+    yardRef.current?.set(state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the primitive fields are the dependencies
+  }, [size, state.mowing, state.edging, state.fertilization, state.weeds, state.hedges, weekly]);
+
+  return (
+    <div ref={box} className="yard-view relative aspect-[4/3] w-full phone:aspect-[16/11]">
+      <div className={clsx("absolute inset-0 transition-opacity duration-700", live && "opacity-0")}>
+        {LAYERS.map((l) => (
+          <picture key={l.id}>
+            <source type="image/avif" srcSet={`/images/3d/yard/${l.id}.avif`} />
+            {/* transparent layers rendered from the 3D yard, stacked and cross-faded (next/image would only re-encode them) */}
+            <img
+              src={`/images/3d/yard/${l.id}.webp`}
+              alt=""
+              width={800}
+              height={600}
+              loading="lazy"
+              decoding="async"
+              className={clsx("absolute inset-0 h-full w-full object-cover transition-opacity duration-500", !l.when(on) && "opacity-0")}
+            />
+          </picture>
+        ))}
+      </div>
+      <canvas ref={canvas} aria-hidden className={clsx("absolute inset-0 hidden h-full w-full transition-opacity duration-700 lg:block", live ? "opacity-100" : "opacity-0")} />
+    </div>
+  );
+}
 
 /**
  * Signature #2: lawn-plan builder. Yard size, services and frequency update a
- * top-down yard illustration and an animated monthly estimate.
+ * 3D model of the yard (stills on phones) and an animated monthly estimate.
  */
 export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
   const [sqft, setSqft] = useState(yard.default);
@@ -42,11 +171,11 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
     const from = shown.current ?? est.monthly;
     shown.current = est.monthly;
     if (prefersReducedMotion() || from === est.monthly) {
-      el.textContent = `$${est.monthly.toLocaleString("en-US")}`;
+      el.textContent = `$${commas(est.monthly)}`;
       return;
     }
     const paint = (n: number) => {
-      el.textContent = `$${Math.round(n).toLocaleString("en-US")}`;
+      el.textContent = `$${commas(n)}`;
     };
     if (!hasMotion()) return rafTween(0.5, (t) => paint(from + (est.monthly - from) * t));
     const obj = { n: from };
@@ -63,8 +192,8 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
 
   // Lawn grows from the house as the yard gets bigger.
   const t = (sqft - yard.min) / (yard.max - yard.min);
-  const scale = 0.62 + 0.38 * t;
   const fill = `${(t * 100).toFixed(1)}%`;
+  const sqftLabel = commas(sqft);
 
   const quoteHref = `/free-estimate?services=lawn-care&size=${sqft}&freq=${freq}&plan=${selected.join(",")}`;
 
@@ -73,151 +202,15 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
       {/* Yard illustration */}
       <div className="lg:col-span-7">
         <div className="relative overflow-hidden rounded-[2rem] bg-[#e7dcc4] p-3 shadow-[inset_0_0_0_1px_rgba(22,36,28,0.08)] sm:p-5 phone:!rounded-[1.25rem] phone:!p-2">
-          <svg viewBox="0 0 480 360" className="block h-auto w-full phone:mx-auto phone:!h-[12.5rem] phone:!w-auto" role="img" aria-labelledby={`${id}-svg`}>
-            <title id={`${id}-svg`}>
-              {`Top-down illustration of a ${sqft.toLocaleString("en-US")} square foot lawn with ${selected.length ? selected.join(", ") : "no services"} selected`}
-            </title>
-            <defs>
-              <pattern id={`${id}-stripes`} width="28" height="28" patternUnits="userSpaceOnUse">
-                <rect width="14" height="28" fill="#5f7d3e" />
-                <rect x="14" width="14" height="28" fill="#6f8f49" />
-              </pattern>
-              <pattern id={`${id}-shaggy`} width="12" height="12" patternUnits="userSpaceOnUse">
-                <rect width="12" height="12" fill="#7c8c4c" />
-                <path d="M2 10l1-4M6 11l.5-5M10 10l-1-4" stroke="#6b7a3f" strokeWidth="1" />
-              </pattern>
-              <clipPath id={`${id}-lawn-clip`}>
-                <rect x="24" y="112" width="432" height="236" rx="22" />
-              </clipPath>
-            </defs>
-
-            {/* property line */}
-            <rect x="8" y="8" width="464" height="344" rx="16" fill="none" stroke="#16241c" strokeOpacity="0.25" strokeDasharray="4 6" />
-
-            <g style={{ transform: `scale(${scale})`, transformOrigin: "240px 108px", transition: "transform 900ms var(--ease-out-expo)" }}>
-              {/* lawn */}
-              <g clipPath={`url(#${id}-lawn-clip)`}>
-                <rect x="24" y="112" width="432" height="236" fill={`url(#${id}-shaggy)`} />
-                <rect
-                  x="24"
-                  y="112"
-                  width="432"
-                  height="236"
-                  fill={`url(#${id}-stripes)`}
-                  style={{ opacity: on("mowing") ? 1 : 0, transition: "opacity 700ms ease" }}
-                />
-                {/* mower */}
-                {on("mowing") && (
-                  <g className="yard-mower">
-                    <rect x="-9" y="-7" width="18" height="14" rx="3" fill="#a3472c" />
-                    <rect x="-6" y="-12" width="12" height="4" rx="1.5" fill="#16241c" />
-                  </g>
-                )}
-                {/* fertilizer granules */}
-                <g>
-                  {FERT.map((p, i) => (
-                    <circle
-                      key={i}
-                      cx={p.x * 1.4}
-                      cy={p.y}
-                      r="2.2"
-                      fill="#f3ede1"
-                      style={{
-                        opacity: on("fertilization") ? 0.9 : 0,
-                        transform: on("fertilization") ? "scale(1)" : "scale(0)",
-                        transformOrigin: `${p.x * 1.4}px ${p.y}px`,
-                        transition: `opacity 400ms ${i * 18}ms, transform 500ms ${i * 18}ms var(--ease-out-expo)`,
-                      }}
-                    />
-                  ))}
-                </g>
-                {/* weeds (visible when weed control is off) */}
-                <g>
-                  {WEEDS.map((p, i) => (
-                    <g
-                      key={i}
-                      style={{
-                        opacity: on("weeds") ? 0 : 1,
-                        transform: on("weeds") ? "scale(0) rotate(40deg)" : "scale(1)",
-                        transformOrigin: `${p.x * 1.4}px ${p.y}px`,
-                        transition: `opacity 400ms ${i * 30}ms, transform 500ms ${i * 30}ms`,
-                      }}
-                    >
-                      <path
-                        d={`M${p.x * 1.4} ${p.y}l-5-4M${p.x * 1.4} ${p.y}l5-4M${p.x * 1.4} ${p.y}l0-6`}
-                        stroke="#4f5f2c"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      />
-                      <circle cx={p.x * 1.4} cy={p.y - 7} r="2.6" fill="#e8c14a" />
-                    </g>
-                  ))}
-                </g>
-              </g>
-
-              {/* crisp edge */}
-              <rect
-                x="24"
-                y="112"
-                width="432"
-                height="236"
-                rx="22"
-                fill="none"
-                stroke="#a3472c"
-                strokeWidth="3"
-                pathLength={1}
-                strokeDasharray="1"
-                style={{ strokeDashoffset: on("edging") ? 0 : 1, transition: "stroke-dashoffset 1.2s var(--ease-organic)" }}
-              />
-
-              {/* hedges along the sides */}
-              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                <g key={i}>
-                  {[14, 466].map((x) => (
-                    <path
-                      key={x}
-                      d={
-                        on("hedges")
-                          ? `M${x - 10} ${134 + i * 30} a10 10 0 1 0 20 0 a10 10 0 1 0 -20 0Z`
-                          : `M${x - 12} ${136 + i * 30} q-2 -12 8 -14 q6 -8 13 1 q9 2 5 12 q3 10 -8 11 q-6 6 -12 0 q-9 0 -6 -10Z`
-                      }
-                      fill={on("hedges") ? "#2f4a34" : "#48613a"}
-                      style={{ transition: "d 600ms var(--ease-out-expo), fill 600ms" }}
-                    />
-                  ))}
-                </g>
-              ))}
-
-              {/* driveway */}
-              <rect x="300" y="104" width="44" height="256" fill="#d9cdb4" />
-              <path d="M300 104v256M344 104v256" stroke="#16241c" strokeOpacity="0.12" />
-
-              {/* trees */}
-              <circle cx="96" cy="210" r="40" fill="#16241c" opacity="0.18" transform="translate(8 8)" />
-              <circle cx="96" cy="210" r="40" fill="#2f4a34" />
-              <circle cx="84" cy="198" r="16" fill="#3d5c3f" />
-              <circle cx="400" cy="286" r="28" fill="#16241c" opacity="0.18" transform="translate(6 6)" />
-              <circle cx="400" cy="286" r="28" fill="#2f4a34" />
-            </g>
-
-            {/* house (fixed) */}
-            <g>
-              <rect x="150" y="22" width="180" height="86" rx="4" fill="#b9ab8f" />
-              <path d="M150 22l40 43h100l40-43M190 65v43M290 65v43" stroke="#8d7f63" strokeWidth="2" fill="none" />
-              <rect x="222" y="104" width="36" height="8" rx="2" fill="#8d7f63" />
-            </g>
-
-            {/* measurement label */}
-            <g fontFamily="var(--font-dm-mono)" fontSize="11" fill="#16241c">
-              <rect x="16" y="16" width="140" height="26" rx="13" fill="#f3ede1" />
-              <text x="30" y="33">
-                {sqft.toLocaleString("en-US")} sq ft turf
-              </text>
-            </g>
-          </svg>
+          <div role="img" aria-label={`A model of a house and a ${sqftLabel} square foot lawn with ${selected.length ? selected.join(", ") : "no services"} selected`}>
+            <YardView sqft={sqft} selected={selected} weekly={freq === "weekly"} />
+          </div>
+          <span className="pointer-events-none absolute left-5 top-5 rounded-full bg-cream/90 px-3.5 py-1.5 font-mono text-[0.72rem] tracking-wide text-forest shadow-[0_2px_12px_rgba(22,36,28,0.12)] backdrop-blur-sm sm:left-7 sm:top-7 phone:!left-3.5 phone:!top-3.5">
+            {sqftLabel} sq ft turf
+          </span>
         </div>
         <p className="mt-3 text-sm text-muted phone:hidden">
-          Illustration updates live: stripes for mowing, a crisp edge for edging, granules for feeding, and hedges that tidy up.
+          The model updates live: stripes and a mower for mowing, a steel edge for edging, granules for feeding, weeds pulled, and hedges shaped.
         </p>
       </div>
 
@@ -230,7 +223,7 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
                 1 · Yard size
               </label>
               <span className="text-sm text-muted">
-                {sqft.toLocaleString("en-US")} sq ft · {acresLabel(sqft)}
+                {sqftLabel} sq ft · {acresLabel(sqft)}
               </span>
             </div>
             <input
@@ -242,7 +235,7 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
               step={yard.step}
               value={sqft}
               onChange={(e) => setSqft(Number(e.target.value))}
-              aria-valuetext={`${sqft.toLocaleString("en-US")} square feet, ${acresLabel(sqft)}`}
+              aria-valuetext={`${sqftLabel} square feet, ${acresLabel(sqft)}`}
               style={{ ["--fill" as string]: fill }}
             />
             <div className="flex justify-between text-xs text-faint phone:!-mt-1.5">
@@ -309,7 +302,7 @@ export function LawnPlanBuilder({ compact = false }: { compact?: boolean }) {
             <p className="t-eyebrow text-lantern">Estimated monthly</p>
             <p className="mt-3 flex items-baseline gap-2 phone:!mt-1" aria-live="polite">
               <span ref={priceEl} className="font-display text-[clamp(3.2rem,6vw,5rem)] leading-none tracking-[-0.04em] tabular-nums phone:!text-[2.3rem]">
-                ${est.monthly.toLocaleString("en-US")}
+                ${commas(est.monthly)}
               </span>
               <span className="text-cream/70">/ month</span>
             </p>

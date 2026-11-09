@@ -9,6 +9,8 @@ import { useBiz } from "@/components/preview/BizContext";
 import { alt as altFor, imgSrc } from "@/content/images";
 import { telOf } from "@/lib/biz-core";
 import { gsap, useGSAP, isPhone, loadMotion, prefersReducedMotion } from "@/lib/gsap";
+import { after3DGate } from "@/lib/three-gate";
+import type { HeroLawn } from "@/components/fx/lawn3d/HeroLawnScene";
 
 type Grass = ComponentType<{ mow: RefObject<{ p: number }>; className?: string }>;
 
@@ -26,23 +28,77 @@ const upTo = (max: number) =>
  * Home hero. A golden-hour video sits in an arched window between two lines of
  * display type; scrolling opens the arch to full-bleed while the lines drift apart.
  * The intro is CSS-only (poster image is the LCP element); the scroll scene is JS.
- * A fringe of wild grass grows in along the bottom, parts around the pointer, and the
- * same scroll rolls a mower across it: "Grown" on arrival, "Kept" as you scroll.
+ *
+ * The centrepiece is a real-time 3D lawn (three.js, desktop only): a crew member on a ride-on
+ * mower half way through the job. The same scroll drives it down three lanes, cutting stripes and
+ * throwing clippings: "Grown" on arrival, "Kept" as you scroll. A still rendered from that scene
+ * is in the server HTML; the canvas fades in over it once the 3D gate passes after load. Desktops
+ * that fail the gate (narrow, reduced motion, no WebGL2) keep the still, or get the light 2D grass.
  *
  * Phones: none of that. A still of a real project, service + town in the headline, the rating and
- * a Call button showing the number, all on the first paint. A strip of lawn along the foot gets
- * mowed once on load; the next section peeks in underneath.
+ * a Call button showing the number, all on the first paint, and a still from the 3D lawn along the
+ * foot (zero bytes of three.js); the next section peeks in underneath.
  */
 export function Hero() {
   const biz = useBiz();
   const root = useRef<HTMLElement>(null);
   const [playVideo, setPlayVideo] = useState(false);
   const [Grass, setGrass] = useState<Grass | null>(null);
+  const [lawnLive, setLawnLive] = useState(false);
+  const lawnCanvas = useRef<HTMLCanvasElement>(null);
   const mow = useRef({ p: 0 });
+
+  // The 3D lawn: only after load, only past the gate, three.js fetched inside the callback.
+  useEffect(() => {
+    if (isPhone()) return;
+    let lawn: HeroLawn | null = null;
+    let disposed = false;
+    let detach = () => {};
+    const cancel = after3DGate(
+      async () => {
+        const { createHeroLawn } = await import("@/components/fx/lawn3d/HeroLawnScene");
+        const cv = lawnCanvas.current;
+        const host = root.current;
+        if (disposed || !cv || !host) return;
+        try {
+          lawn = createHeroLawn(cv, { progress: () => mow.current.p, onFirstFrame: () => setLawnLive(true) });
+        } catch {
+          return; // no WebGL after all: the still stays
+        }
+        const l = lawn;
+        const onMove = (e: PointerEvent) => {
+          const r = cv.getBoundingClientRect();
+          l.setPointer(e.clientX - r.left, e.clientY - r.top);
+        };
+        const onLeave = () => l.clearPointer();
+        const io = new IntersectionObserver(([en]) => l.setVisible(en.isIntersecting));
+        const ro = new ResizeObserver(() => l.resize());
+        host.addEventListener("pointermove", onMove);
+        host.addEventListener("pointerleave", onLeave);
+        io.observe(host);
+        ro.observe(cv);
+        detach = () => {
+          host.removeEventListener("pointermove", onMove);
+          host.removeEventListener("pointerleave", onLeave);
+          io.disconnect();
+          ro.disconnect();
+        };
+      },
+      () => {
+        if (prefersReducedMotion()) return; // the still is the reduced-motion frame
+        void Promise.all([import("@/components/fx/HeroGrass"), loadMotion()]).then(([m]) => !disposed && setGrass(() => m.HeroGrass));
+      },
+    );
+    return () => {
+      disposed = true;
+      cancel();
+      detach();
+      lawn?.dispose();
+    };
+  }, []);
 
   useEffect(() => {
     if (isPhone()) return;
-    void Promise.all([import("@/components/fx/HeroGrass"), loadMotion()]).then(([m]) => setGrass(() => m.HeroGrass));
     const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
     if (prefersReducedMotion() || conn?.saveData) return;
     // Start the video after load + idle, so it never competes with the LCP poster.
@@ -62,7 +118,7 @@ export function Hero() {
     () => {
       if (prefersReducedMotion()) return;
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: root.current, start: "top top", end: "+=80%", scrub: 0.8, pin: true, anticipatePin: 1 },
+        scrollTrigger: { trigger: root.current, start: "top top", end: "+=100%", scrub: 0.8, pin: true, anticipatePin: 1 },
         defaults: { ease: "none" },
       });
       tl.fromTo(".hero-frame", { clipPath: "inset(15% 29% 0% 29% round 21vw 21vw 0px 0px)" }, { clipPath: "inset(0% 0% 0% 0% round 0px 0px 0px 0px)" }, 0)
@@ -110,20 +166,23 @@ export function Hero() {
           <div className="hero-shade absolute inset-0 bg-forest opacity-0" />
         </div>
 
-        {/* Desktop grass comes with its own chunk; phones never load it */}
+        {/* The lawn: a still rendered from the 3D scene (server HTML, and all a phone ever gets) … */}
+        <picture className={`hero-lawn-still pointer-events-none absolute inset-x-0 bottom-0 h-[58%] transition-opacity duration-1000 ${lawnLive || Grass ? "opacity-0" : ""}`}>
+          <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/avif" srcSet="/images/3d/hero-lawn-phone.avif" width={750} height={250} />
+          <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/webp" srcSet="/images/3d/hero-lawn-phone.webp" width={750} height={250} />
+          <source type="image/avif" srcSet="/images/3d/hero-lawn.avif" />
+          {/* a pre-sized transparent still rendered from the 3D scene (next/image would only re-encode it) */}
+          <img src="/images/3d/hero-lawn.webp" alt="" aria-hidden width={1600} height={584} decoding="async" fetchPriority="low" className="h-full w-full object-cover object-bottom" />
+        </picture>
+        {/* … the live scene fades in over it on a desktop with a mouse … */}
+        <canvas
+          ref={lawnCanvas}
+          aria-hidden
+          className={`hero-lawn-canvas pointer-events-none absolute inset-x-0 bottom-0 hidden h-[58%] w-full transition-opacity duration-[1.4s] lg:block ${lawnLive ? "opacity-100" : "opacity-0"}`}
+        />
+        {/* … and narrower desktops without 3D get the light 2D grass */}
         {Grass && <Grass mow={mow} className="pointer-events-none absolute inset-x-0 bottom-[4.4rem] h-[40%] w-full lg:bottom-0 lg:h-[44%]" />}
-
-        {/* Phones: the one lawn touch, mowed once along the foot of the hero */}
-        <div aria-hidden className="hero-lawn">
-          <span className="hero-lawn-cut" />
-          <svg viewBox="0 0 44 30" className="hero-mower">
-            <path d="M12 16L2 3" fill="none" stroke="#f3ede1" strokeWidth={2} strokeLinecap="round" />
-            <path d="M9 13h22q7 0 9 7v2H9z" fill="#a3472c" />
-            <rect x={20} y={8} width={12} height={6} rx={2} fill="#16241c" />
-            <circle cx={14} cy={24} r={5} fill="#16241c" />
-            <circle cx={35} cy={24} r={5} fill="#16241c" />
-          </svg>
-        </div>
+        <div aria-hidden className="hero-lawn-shade pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-forest/55 to-transparent" />
 
         <div className="hero-body wrap relative flex h-full flex-col justify-between pb-36 pt-[calc(var(--header-h)+1.5rem)] lg:pb-20">
           <h1 className="hero-head relative flex flex-1 flex-col justify-between pb-8">
@@ -155,20 +214,20 @@ export function Hero() {
               <Button href="/free-estimate" variant="light" className="hero-more">
                 Get a free estimate
               </Button>
-              <Button href="/lawn-plans" variant="ghost" className="hero-more text-cream">
+              <Button href="/lawn-plans" variant="ghost" className="hero-more bg-forest/45 text-cream backdrop-blur-md">
                 Build a lawn plan
               </Button>
             </div>
             <div className="hero-facts flex flex-wrap items-center gap-3 text-cream/90">
               {biz.rating && (
-                <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm">
+                <Link href="/reviews" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-forest/55 px-3 py-1.5 text-sm backdrop-blur-md">
                   <span className="text-lantern" aria-hidden>
                     ★★★★★
                   </span>
                   {biz.rating.value} · {biz.rating.count} Google reviews
                 </Link>
               )}
-              <OpenBadge />
+              <OpenBadge className="bg-forest/55 backdrop-blur-md" />
             </div>
           </div>
         </div>

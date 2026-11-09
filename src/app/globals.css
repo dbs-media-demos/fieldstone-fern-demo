@@ -622,22 +622,6 @@ input[type="range"].yard-range::-moz-range-thumb {
   border: 3px solid var(--forest);
 }
 
-/* Lawn builder mower: back-and-forth passes across the stripes */
-.yard-mower {
-  animation: mow 9s linear infinite;
-}
-@keyframes mow {
-  0% { transform: translate(60px, 140px) rotate(90deg); }
-  22% { transform: translate(420px, 140px) rotate(90deg); }
-  25% { transform: translate(420px, 196px) rotate(270deg); }
-  47% { transform: translate(60px, 196px) rotate(270deg); }
-  50% { transform: translate(60px, 252px) rotate(90deg); }
-  72% { transform: translate(420px, 252px) rotate(90deg); }
-  75% { transform: translate(420px, 308px) rotate(270deg); }
-  97% { transform: translate(60px, 308px) rotate(270deg); }
-  100% { transform: translate(60px, 140px) rotate(90deg); }
-}
-
 /* FAQ accordion: animate native <details> open/close where supported */
 :root {
   interpolate-size: allow-keywords;
@@ -651,6 +635,13 @@ input[type="range"].yard-range::-moz-range-thumb {
 }
 .faq[open]::details-content {
   block-size: auto;
+}
+
+/* Hero lawn (the 3D canvas and the still rendered from it): the far edge fades into the scene */
+.hero-lawn-still,
+.hero-lawn-canvas {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8%);
+  mask-image: linear-gradient(to bottom, transparent, #000 8%);
 }
 
 /* Hero still photo breathes slowly until the video takes over */
@@ -851,7 +842,6 @@ input[type="range"].yard-range::-moz-range-thumb {
 }
 
 .hero-svc,
-.hero-lawn,
 .hero-call {
   display: none;
 }
@@ -933,10 +923,6 @@ input[type="range"].yard-range::-moz-range-thumb {
   .marquee,
   .bed-sway {
     animation: none;
-  }
-  .yard-mower {
-    animation: none;
-    transform: translate(60px, 140px) rotate(90deg);
   }
   ::view-transition-group(*),
   ::view-transition-old(*),
@@ -1040,7 +1026,7 @@ input[type="range"].yard-range::-moz-range-thumb {
     height: auto;
     justify-content: flex-end;
     padding-top: calc(var(--header-h) + 1rem);
-    padding-bottom: 1.9rem;
+    padding-bottom: min(calc(100vw / 3 - 0.9rem), 10rem);
   }
   .hero-head {
     display: block;
@@ -1118,30 +1104,20 @@ input[type="range"].yard-range::-moz-range-thumb {
     font-size: 0.84rem;
   }
 
-  /* The one lawn touch: a strip along the hero's foot, mowed once on load (transform only) */
-  .hero-lawn {
-    display: block;
-    position: absolute;
-    inset-inline: 0;
-    bottom: 0;
-    z-index: 1;
-    height: 0.6rem;
-    background: #2f4a34;
+  /* The one lawn touch: a still rendered from the desktop's 3D lawn, along the hero's foot */
+  .hero-lawn-still {
+    top: auto;
+    z-index: 0;
+    height: calc(100vw / 3);
+    max-height: 11rem;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 26%);
+    mask-image: linear-gradient(to bottom, transparent, #000 26%);
   }
-  .hero-lawn-cut {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(90deg, #a9bb72 0 46px, #5f7d42 46px 92px);
-    transform-origin: 0 50%;
-    animation: lawn-cut 2.6s cubic-bezier(0.45, 0, 0.55, 1) 0.5s both;
+  .hero-lawn-still img {
+    object-position: 50% 100%;
   }
-  .hero-mower {
-    position: absolute;
-    left: 0;
-    bottom: 0.1rem;
-    width: 2.6rem;
-    height: auto;
-    animation: lawn-mower 2.6s cubic-bezier(0.45, 0, 0.55, 1) 0.5s both;
+  .hero-lawn-shade {
+    display: none;
   }
 
   /* ── stacked versions of the desktop scenes ── */
@@ -1208,21 +1184,5 @@ input[type="range"].yard-range::-moz-range-thumb {
 @keyframes menu-in {
   from {
     opacity: 0;
-  }
-}
-@keyframes lawn-cut {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-@keyframes lawn-mower {
-  from {
-    transform: translateX(-2.6rem);
-  }
-  to {
-    transform: translateX(100vw);
   }
 }
