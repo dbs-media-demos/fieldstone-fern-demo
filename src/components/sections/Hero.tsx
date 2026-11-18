@@ -10,6 +10,7 @@ import { alt as altFor, imgSrc } from "@/content/images";
 import { telOf } from "@/lib/biz-core";
 import { gsap, useGSAP, isPhone, loadMotion, prefersReducedMotion } from "@/lib/gsap";
 import { after3DGate, demote3D, queue3D } from "@/lib/three-gate";
+import { whenLoaderDone } from "@/lib/loader";
 import type { HeroLawn } from "@/components/fx/lawn3d/HeroLawnScene";
 import type { Lawn2D } from "@/components/fx/lawn2d/LawnStripes";
 
@@ -168,13 +169,18 @@ export function Hero({ variant = "3d" }: { variant?: "3d" | "2d" } = {}) {
       };
     };
     let wait = 0;
+    // The mower's drive-in waits for a preview's logo loader to start leaving
+    let unwait = () => {};
     const start = () => {
-      wait = window.setTimeout(() => void go(), 60);
+      unwait = whenLoaderDone(() => {
+        wait = window.setTimeout(() => void go(), 60);
+      });
     };
     if (document.readyState === "complete") start();
     else window.addEventListener("load", start, { once: true });
     return () => {
       disposed = true;
+      unwait();
       window.clearTimeout(wait);
       window.removeEventListener("load", start);
       detach();

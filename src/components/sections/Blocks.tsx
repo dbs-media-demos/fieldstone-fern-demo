@@ -6,7 +6,7 @@ import { Parallax, Reveal, SplitReveal } from "@/components/ui/Reveal";
 import { reviews, type Review } from "@/content/misc";
 import { site } from "@/content/site";
 import { defaultBiz } from "@/lib/biz";
-import { telOf, type Biz } from "@/lib/biz-core";
+import { areasFor, telOf, type Biz } from "@/lib/biz-core";
 import { RakedLeaves } from "@/components/fx/RakedLeaves";
 import { HedgeTrim } from "@/components/fx/HedgeTrim";
 
@@ -65,8 +65,10 @@ export function ReviewCard({ r, className, area }: { r: Review; className?: stri
 
 /** Rating summary + two opposing marquees of review cards; leaves get raked up beside the link. */
 export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
-  // Previews keep the sample reviews, placed in the business's area and labelled as samples
-  const area = biz.preview ? biz.area : undefined;
+  // Previews keep the sample reviews, labelled as samples, placed in the business's own town or
+  // spread over the towns it serves.
+  const towns = biz.preview ? areasFor(biz) : [];
+  const areaOf = (r: Review) => (towns.length ? towns[Math.max(0, reviews.indexOf(r)) % towns.length] : undefined);
   const a = reviews.slice(0, 6);
   const b = reviews.slice(6);
   // Phones: the reviews that name a project first, in full; the rest to swipe through
@@ -100,12 +102,12 @@ export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
 
       <div className="wrap mt-4 hidden space-y-2.5 phone:block">
         {lead.map((r) => (
-          <ReviewCard key={r.name} r={r} area={area} />
+          <ReviewCard key={r.name} r={r} area={areaOf(r)} />
         ))}
       </div>
       <div className="phone-swipe mt-2.5 hidden phone:!flex [--card:86vw]">
         {rest.map((r) => (
-          <ReviewCard key={r.name} r={r} area={area} />
+          <ReviewCard key={r.name} r={r} area={areaOf(r)} />
         ))}
       </div>
 
@@ -113,7 +115,7 @@ export function ReviewsWall({ biz = defaultBiz }: { biz?: Biz }) {
         {[a, b].map((row, ri) => (
           <div key={ri} className={clsx("marquee flex w-max gap-5", ri && "marquee-rev")} style={{ ["--speed" as string]: ri ? "75s" : "65s" }}>
             {[...row, ...row].map((r, i) => (
-              <ReviewCard key={i} r={r} area={area} className="w-[min(86vw,26rem)] shrink-0" />
+              <ReviewCard key={i} r={r} area={areaOf(r)} className="w-[min(86vw,26rem)] shrink-0" />
             ))}
           </div>
         ))}

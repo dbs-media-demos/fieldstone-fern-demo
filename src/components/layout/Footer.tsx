@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Mark } from "@/components/brand/Logo";
+import { LeadLogo } from "@/components/brand/LeadLogo";
 import { OpenBadge } from "@/components/ui/OpenBadge";
 import { site, mailHref, agencyName, agencyUrl } from "@/content/site";
 import { defaultBiz } from "@/lib/biz";
-import { DAY_NAMES, dayRange, telOf, weekFromMonday, type Biz } from "@/lib/biz-core";
+import { DAY_NAMES, areasFor, dayRange, telOf, weekFromMonday, type Biz } from "@/lib/biz-core";
 import { services } from "@/content/services";
 import { cities } from "@/content/cities";
 
@@ -70,8 +71,8 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
             <div>
             <h2 className="t-eyebrow text-faint">Service areas</h2>
             <ul className="mt-5 space-y-1 phone:!mt-0 phone:flex phone:flex-wrap phone:gap-x-3 phone:!space-y-0">
-              {(biz.preview ? [{ slug: "", label: biz.area }] : cities.map((c) => ({ slug: c.slug, label: `${c.name}, TX` }))).map((c) => (
-                <li key={c.slug}>
+              {(biz.preview ? areasFor(biz).map((a) => ({ slug: "", label: a })) : cities.map((c) => ({ slug: c.slug, label: `${c.name}, TX` }))).map((c) => (
+                <li key={c.slug || c.label}>
                   <Link href={`/service-areas/${c.slug}`} className="inline-flex min-h-10 items-center text-muted transition-colors hover:text-fg phone:!min-h-[1.7rem] phone:!text-[0.86rem]">
                     {c.label}
                   </Link>
@@ -106,7 +107,9 @@ export function Footer({ biz = defaultBiz }: { biz?: Biz }) {
         </ul>
 
         <div aria-hidden className="relative select-none py-10 phone:hidden">
-          {biz.preview ? (
+          {biz.logo ? (
+            <LeadLogo svg={biz.logo.svg} className="h-[clamp(4rem,9vw,9.5rem)] max-w-full text-cream/95" />
+          ) : biz.preview ? (
             <div className="font-display flex items-center gap-[2vw] text-[clamp(2.4rem,7vw,7.5rem)] leading-[0.95] tracking-[-0.045em] text-cream/95">
               <Mark className="h-[0.8em] w-[0.8em] shrink-0 text-lantern" />
               <span className="min-w-0 [overflow-wrap:anywhere]">{biz.shortName}</span>

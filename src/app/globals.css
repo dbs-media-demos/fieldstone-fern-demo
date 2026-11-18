@@ -1186,3 +1186,160 @@ input[type="range"].yard-range::-moz-range-thumb {
     opacity: 0;
   }
 }
+
+/* ─────────────────────────── the lead's logo ─────────────────────────── */
+
+/* Inline SVG from the CRM: ink is currentColor, the name is set in our display face */
+.lead-logo {
+  display: inline-block;
+  line-height: 0;
+}
+.lead-logo svg {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
+}
+.lead-logo [data-part="word"] text {
+  font-family: var(--font-serif);
+}
+
+/* The loader (components/preview/LeadLoader): shown only while the inline script says so, gone at 3 s whatever happens */
+@property --ll-open {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+.lead-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  place-items: center;
+  overflow: hidden;
+  animation: ll-failsafe 0.01s linear 3s forwards;
+}
+html:is([data-loader="on"], [data-loader="out"], [data-loader="skip-out"], [data-loader="fade"]) .lead-loader {
+  display: grid;
+}
+/* Golden hour low behind the logo, as in the hero */
+.lead-loader__sun {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: min(110vw, 1100px);
+  aspect-ratio: 1.8;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--lantern) 38%, transparent), transparent);
+  opacity: 0;
+  animation: ll-sun 1.8s var(--ease-out-expo) 0.15s forwards;
+}
+.lead-loader__logo {
+  position: relative;
+  width: min(64vw, 520px);
+  color: var(--cream);
+}
+.lead-loader__logo svg {
+  width: 100%;
+  height: auto;
+}
+.lead-loader [data-ll] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  fill-opacity: 0;
+  opacity: 0;
+  animation:
+    ll-draw 0.9s var(--ease-organic) var(--d, 0s) forwards,
+    ll-fill 0.55s var(--ease-out-expo) var(--fd, 0.72s) forwards;
+}
+/* The name grows up out of the ground line */
+.lead-loader [data-part="word"] {
+  transform-box: fill-box;
+  clip-path: inset(100% -3% -25% -3%);
+  animation: ll-word 1s var(--ease-out-expo) 0.55s forwards;
+}
+@keyframes ll-draw {
+  0% {
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ll-fill {
+  to {
+    fill-opacity: var(--fo, 1);
+  }
+}
+@keyframes ll-word {
+  from {
+    clip-path: inset(100% -3% -25% -3%);
+    transform: translateY(22%);
+  }
+  to {
+    clip-path: inset(-25% -3% -25% -3%);
+    transform: none;
+  }
+}
+@keyframes ll-sun {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ll-failsafe {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+/* Exit: an arched window opens in the forest from the ground up (the hero's arch), the logo lifting away */
+@keyframes ll-open {
+  to {
+    --ll-open: 104%;
+  }
+}
+html[data-loader="out"] .lead-loader {
+  -webkit-mask-image: radial-gradient(farthest-corner ellipse at 50% 100%, transparent var(--ll-open), #000 calc(var(--ll-open) + 0.6%));
+  mask-image: radial-gradient(farthest-corner ellipse at 50% 100%, transparent var(--ll-open), #000 calc(var(--ll-open) + 0.6%));
+  animation:
+    ll-failsafe 0.01s linear 3s forwards,
+    ll-open 0.9s var(--ease-in-out-quart) forwards;
+}
+html[data-loader="out"] .lead-loader__logo {
+  transform: translateY(-9vh) scale(0.96);
+  opacity: 0;
+  transition:
+    transform 0.9s var(--ease-in-out-quart),
+    opacity 0.5s ease 0.1s;
+}
+html:is([data-loader="skip-out"], [data-loader="fade"]) .lead-loader {
+  opacity: 0;
+  transition: opacity 0.38s ease;
+}
+/* The hero's own entrance (arch window, headline, buttons) waits for the loader to start leaving */
+html[data-loading] .hero-section,
+html[data-loading] .hero-section * {
+  animation-play-state: paused !important;
+}
+@media (max-width: 767px) {
+  .lead-loader__logo {
+    width: 78vw;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lead-loader [data-ll],
+  .lead-loader [data-part="word"],
+  .lead-loader__sun {
+    animation: none;
+    stroke-dashoffset: 0;
+    fill-opacity: var(--fo, 1);
+    opacity: 1;
+    clip-path: none;
+  }
+}

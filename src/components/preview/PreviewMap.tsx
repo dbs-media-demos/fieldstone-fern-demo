@@ -24,6 +24,15 @@ export function PreviewMap({ biz }: { biz: Biz }) {
         />
         <div className="mt-14 grid gap-10 lg:grid-cols-12 lg:items-start">
           <Reveal className="lg:col-span-4">
+            {biz.areas.length > 1 && (
+              <ul className="mb-6 flex flex-wrap gap-2" aria-label="Areas we serve">
+                {biz.areas.map((a) => (
+                  <li key={a} className="rounded-full border border-line bg-cream/60 px-3.5 py-1.5 text-[0.92rem]">
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            )}
             <OpenBadge />
             {biz.hours && (
               <dl className="mt-6 space-y-1.5 text-muted">

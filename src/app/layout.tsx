@@ -56,7 +56,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-US" className={`${fraunces.variable} ${hanken.variable} ${dmMono.variable}`}>
+    <html lang="en-US" className={`${fraunces.variable} ${hanken.variable} ${dmMono.variable}`} suppressHydrationWarning>
       <body className="theme-cream min-h-screen">
         <a
           href="#main"

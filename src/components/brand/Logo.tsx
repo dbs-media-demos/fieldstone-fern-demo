@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { useBiz } from "@/components/preview/BizContext";
+import { LeadLogo } from "./LeadLogo";
 
 /**
  * Fieldstone & Fern mark: a cairn of three field stones with a fern fiddlehead
@@ -48,6 +49,8 @@ export function Mark({ className, animate = false, title }: { className?: string
 
 export function Logo({ className, animate = false, compact = false }: { className?: string; animate?: boolean; compact?: boolean }) {
   const biz = useBiz();
+  // A preview with the business's own logo: theirs, in the header's ink (currentColor)
+  if (biz.logo) return <LeadLogo svg={biz.logo.svg} className={clsx("h-9 max-w-[12rem] sm:h-10 sm:max-w-[17rem]", className)} />;
   return (
     <span className={clsx("inline-flex items-center gap-2.5", className)}>
       <Mark className="h-9 w-9 shrink-0" animate={animate} />

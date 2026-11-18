@@ -60,8 +60,8 @@ export function Translate({ dict }: { dict: Record<string, string> }) {
   return null;
 }
 
-/** Hide the page until the first translation pass; show it anyway after 2.5 s if JS fails. */
-export const translateGateCss = "html:not(.tr-ready) body{opacity:0;animation:tr-reveal 0s 2.5s forwards}@keyframes tr-reveal{to{opacity:1}}";
+/** Hide the page until the first translation pass; show it anyway after 2.5 s if JS fails. The lead's logo loader stays: it covers the page anyway. */
+export const translateGateCss = "html:not(.tr-ready) body>:not(.lead-loader){opacity:0;animation:tr-reveal 0s 2.5s forwards}@keyframes tr-reveal{to{opacity:1}}";
 
 /**
  * Dev helper: every visible English fragment on the page that the dictionary doesn't cover yet.
