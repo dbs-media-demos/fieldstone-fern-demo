@@ -5,6 +5,7 @@ import { Photo } from "@/components/ui/Photo";
 import { Button, Arrow } from "@/components/ui/Button";
 import { Counter, Parallax, Reveal, ScrubWords } from "@/components/ui/Reveal";
 import { Hero } from "@/components/sections/Hero";
+import { No3D } from "@/lib/no-3d";
 import { ServicesList } from "@/components/sections/ServicesList";
 import { WorkModes } from "@/components/sections/WorkModes";
 import { BeforeAfterGrow } from "@/components/sections/BeforeAfterGrow";
@@ -49,15 +50,19 @@ function previewStats(biz: Biz): Stat[] {
  * The homepage sections. The concept site renders them as they are; a personalised preview
  * (/for/<token>) passes a real business: its name, phone, hours, rating and a map of its address
  * replace Fieldstone & Fern's, and the Southlake service-area map and city ticker step aside.
+ *
+ * Two versions, one tree: `hero="3d"` is / (the real-time 3D lawn), `hero="2d"` is /v2 (the same
+ * page for a slow laptop or a lead who doesn't want 3D): a 2D lawn-striping hero, and the 3D yard
+ * further down keeps its stills. Zero three.js on /v2 at any width. Phones see the same page on both.
  */
-export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; children?: ReactNode }) {
+export function HomeContent({ biz = defaultBiz, hero = "3d", children }: { biz?: Biz; hero?: "3d" | "2d"; children?: ReactNode }) {
   const statList = biz.preview ? previewStats(biz) : stats;
-  return (
+  const page = (
     <PageShell>
       {children}
       <div className="home-flow">
       <div style={at(1)}>
-        <Hero />
+        {hero === "3d" ? <Hero /> : <Hero variant="2d" />}
       </div>
 
       {/* Statement */}
@@ -302,4 +307,5 @@ export function HomeContent({ biz = defaultBiz, children }: { biz?: Biz; childre
       </div>
     </PageShell>
   );
+  return hero === "3d" ? page : <No3D>{page}</No3D>;
 }

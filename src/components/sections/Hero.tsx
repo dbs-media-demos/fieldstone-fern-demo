@@ -11,6 +11,7 @@ import { telOf } from "@/lib/biz-core";
 import { gsap, useGSAP, isPhone, loadMotion, prefersReducedMotion } from "@/lib/gsap";
 import { after3DGate, demote3D, queue3D } from "@/lib/three-gate";
 import type { HeroLawn } from "@/components/fx/lawn3d/HeroLawnScene";
+import type { Lawn2D } from "@/components/fx/lawn2d/LawnStripes";
 
 type Grass = ComponentType<{ mow: RefObject<{ p: number }>; className?: string }>;
 
@@ -40,8 +41,14 @@ const upTo = (max: number) =>
  * Phones: none of that. A still of a real project, service + town in the headline, the rating and
  * a Call button showing the number, all on the first paint, and a still from the 3D lawn along the
  * foot (zero bytes of three.js); the next section peeks in underneath.
+ *
+ * `variant="2d"` is the /v2 hero (the homepage without 3D): the same window, words and scroll, with
+ * the lawn drawn in canvas 2D from plates rendered off the 3D scene (fx/lawn2d): the mower drives in,
+ * cuts its lane and, with the scroll, the next two. No three.js, no WebGL, at any width; the heading,
+ * text and buttons are there on the first paint without an intro. Phones see the same hero as on /.
  */
-export function Hero() {
+export function Hero({ variant = "3d" }: { variant?: "3d" | "2d" } = {}) {
+  const flat = variant === "2d";
   const biz = useBiz();
   const root = useRef<HTMLElement>(null);
   const [playVideo, setPlayVideo] = useState(false);
@@ -49,10 +56,13 @@ export function Hero() {
   const [lawnLive, setLawnLive] = useState(false);
   const lawnCanvas = useRef<HTMLCanvasElement>(null);
   const mow = useRef({ p: 0 });
+  const [flatLive, setFlatLive] = useState(false);
+  const flatCanvas = useRef<HTMLCanvasElement>(null);
+  const flatStill = useRef<HTMLImageElement>(null);
 
   // The 3D lawn: only after load, only past the gate, three.js fetched inside the callback.
   useEffect(() => {
-    if (isPhone()) return;
+    if (flat || isPhone()) return;
     let lawn: HeroLawn | null = null;
     let disposed = false;
     let detach = () => {};
@@ -116,7 +126,61 @@ export function Hero() {
       window.clearTimeout(drop);
       lawn?.dispose();
     };
-  }, []);
+  }, [flat]);
+
+  // /v2: the 2D lawn, desktop only, fetched after load (phones keep the still and never download it)
+  useEffect(() => {
+    if (!flat || isPhone()) return;
+    let lawn: Lawn2D | null = null;
+    let disposed = false;
+    let detach = () => {};
+    const go = async () => {
+      const { createLawn2D } = await import("@/components/fx/lawn2d/LawnStripes");
+      const cv = flatCanvas.current;
+      const host = root.current;
+      if (disposed || !cv || !host) return;
+      const l = await createLawn2D(cv, {
+        progress: () => mow.current.p,
+        reduced: prefersReducedMotion(),
+        still: flatStill.current,
+        onReady: () => !disposed && setFlatLive(true),
+      }).catch(() => null);
+      if (!l) return;
+      if (disposed) return l.dispose();
+      lawn = l;
+      const onMove = (e: PointerEvent) => {
+        if (e.pointerType === "touch") return;
+        const r = cv.getBoundingClientRect();
+        l.setPointer(e.clientX - r.left, e.clientY - r.top);
+      };
+      const onLeave = () => l.clearPointer();
+      const io = new IntersectionObserver(([en]) => l.setVisible(en.isIntersecting));
+      const ro = new ResizeObserver(() => l.resize());
+      host.addEventListener("pointermove", onMove);
+      host.addEventListener("pointerleave", onLeave);
+      io.observe(host);
+      ro.observe(cv);
+      detach = () => {
+        host.removeEventListener("pointermove", onMove);
+        host.removeEventListener("pointerleave", onLeave);
+        io.disconnect();
+        ro.disconnect();
+      };
+    };
+    let wait = 0;
+    const start = () => {
+      wait = window.setTimeout(() => void go(), 60);
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+    return () => {
+      disposed = true;
+      window.clearTimeout(wait);
+      window.removeEventListener("load", start);
+      detach();
+      lawn?.dispose();
+    };
+  }, [flat]);
 
   useEffect(() => {
     if (isPhone()) return;
@@ -143,12 +207,13 @@ export function Hero() {
         defaults: { ease: "none" },
       });
       tl.fromTo(".hero-frame", { clipPath: "inset(15% 29% 0% 29% round 21vw 21vw 0px 0px)" }, { clipPath: "inset(0% 0% 0% 0% round 0px 0px 0px 0px)" }, 0)
-        .fromTo(".hero-media", { scale: 1.18 }, { scale: 1 }, 0)
-        .fromTo(".hero-l1", { xPercent: 0, yPercent: 0 }, { xPercent: -8, yPercent: -40 }, 0)
-        .fromTo(".hero-l2", { xPercent: 0, yPercent: 0 }, { xPercent: 8, yPercent: 30 }, 0)
-        .fromTo(".hero-shade", { opacity: 0 }, { opacity: 0.35 }, 0)
-        .fromTo(".hero-foot", { opacity: 1, y: 0 }, { opacity: 0, y: 40 }, 0)
-        .fromTo(mow.current, { p: 0 }, { p: 1, duration: 0.95 }, 0.05);
+        .fromTo(".hero-media", { scale: 1.18 }, { scale: 1 }, 0);
+      // On / the headline and buttons are held by their CSS intro (fill-mode both) through this scroll;
+      // /v2 has no intro, so it leaves them out and they stay put the same way.
+      if (!flat) tl.fromTo(".hero-l1", { xPercent: 0, yPercent: 0 }, { xPercent: -8, yPercent: -40 }, 0).fromTo(".hero-l2", { xPercent: 0, yPercent: 0 }, { xPercent: 8, yPercent: 30 }, 0);
+      tl.fromTo(".hero-shade", { opacity: 0 }, { opacity: 0.35 }, 0);
+      if (!flat) tl.fromTo(".hero-foot", { opacity: 1, y: 0 }, { opacity: 0, y: 40 }, 0);
+      tl.fromTo(mow.current, { p: 0 }, { p: 1, duration: 0.95 }, 0.05);
     },
     { scope: root },
   );
@@ -157,7 +222,7 @@ export function Hero() {
 
   return (
     <div>
-      <section ref={root} className="hero-section theme-forest relative isolate h-[100svh] min-h-[640px] overflow-hidden">
+      <section ref={root} data-hero={flat ? "2d" : undefined} className="hero-section theme-forest relative isolate h-[100svh] min-h-[640px] overflow-hidden">
         {/* Arched video window */}
         <div className="hero-frame anim-hero-frame absolute inset-0 -z-10">
           <div className="hero-media absolute inset-0 origin-bottom">
@@ -188,44 +253,62 @@ export function Hero() {
         </div>
 
         {/* The lawn: a still rendered from the 3D scene (server HTML, and all a phone ever gets) … */}
-        <picture className={`hero-lawn-still pointer-events-none absolute inset-x-0 bottom-0 h-[58%] transition-opacity duration-1000 ${lawnLive || Grass ? "opacity-0" : ""}`}>
-          <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/avif" srcSet="/images/3d/hero-lawn-phone.avif" width={750} height={250} />
-          <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/webp" srcSet="/images/3d/hero-lawn-phone.webp" width={750} height={250} />
-          <source type="image/avif" srcSet="/images/3d/hero-lawn.avif" />
-          {/* a pre-sized transparent still rendered from the 3D scene (next/image would only re-encode it) */}
-          <img src="/images/3d/hero-lawn.webp" alt="" aria-hidden width={1600} height={584} decoding="async" fetchPriority="low" className="h-full w-full object-cover object-bottom" />
-        </picture>
-        {/* … the live scene fades in over it on a desktop with a mouse … */}
-        <canvas
-          ref={lawnCanvas}
-          aria-hidden
-          className={`hero-lawn-canvas pointer-events-none absolute inset-x-0 bottom-0 hidden h-[58%] w-full transition-opacity duration-[1.4s] lg:block ${lawnLive ? "opacity-100" : "opacity-0"}`}
-        />
+        {flat ? (
+          <picture className={`hero-lawn-still pointer-events-none absolute inset-x-0 bottom-0 h-[58%] transition-opacity duration-1000 ${flatLive ? "opacity-0" : ""}`}>
+            <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/avif" srcSet="/images/3d/hero-lawn-phone.avif" width={750} height={250} />
+            <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/webp" srcSet="/images/3d/hero-lawn-phone.webp" width={750} height={250} />
+            {/* /v2: the plate the 2D mower works on, before it arrives */}
+            <source type="image/avif" srcSet="/images/3d/v2/plate.avif" />
+            <img ref={flatStill} src="/images/3d/v2/plate.webp" alt="" aria-hidden width={1800} height={600} decoding="async" fetchPriority="low" className="h-full w-full object-cover object-bottom" />
+          </picture>
+        ) : (
+          <picture className={`hero-lawn-still pointer-events-none absolute inset-x-0 bottom-0 h-[58%] transition-opacity duration-1000 ${lawnLive || Grass ? "opacity-0" : ""}`}>
+            <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/avif" srcSet="/images/3d/hero-lawn-phone.avif" width={750} height={250} />
+            <source media="(max-width: 767px), (hover: none) and (pointer: coarse)" type="image/webp" srcSet="/images/3d/hero-lawn-phone.webp" width={750} height={250} />
+            <source type="image/avif" srcSet="/images/3d/hero-lawn.avif" />
+            {/* a pre-sized transparent still rendered from the 3D scene (next/image would only re-encode it) */}
+            <img src="/images/3d/hero-lawn.webp" alt="" aria-hidden width={1600} height={584} decoding="async" fetchPriority="low" className="h-full w-full object-cover object-bottom" />
+          </picture>
+        )}
+        {/* … the live scene fades in over it on a desktop with a mouse (on /v2, the 2D lawn on any desktop) … */}
+        {flat ? (
+          <canvas
+            ref={flatCanvas}
+            aria-hidden
+            className={`hero-lawn-canvas pointer-events-none absolute inset-x-0 bottom-0 h-[58%] w-full transition-opacity duration-700 phone:hidden ${flatLive ? "opacity-100" : "opacity-0"}`}
+          />
+        ) : (
+          <canvas
+            ref={lawnCanvas}
+            aria-hidden
+            className={`hero-lawn-canvas pointer-events-none absolute inset-x-0 bottom-0 hidden h-[58%] w-full transition-opacity duration-[1.4s] lg:block ${lawnLive ? "opacity-100" : "opacity-0"}`}
+          />
+        )}
         {/* … and narrower desktops without 3D get the light 2D grass */}
         {Grass && <Grass mow={mow} className="pointer-events-none absolute inset-x-0 bottom-[4.4rem] h-[40%] w-full lg:bottom-0 lg:h-[44%]" />}
         <div aria-hidden className="hero-lawn-shade pointer-events-none absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-forest/55 to-transparent" />
 
         <div className="hero-body wrap relative flex h-full flex-col justify-between pb-36 pt-[calc(var(--header-h)+1.5rem)] lg:pb-20">
           <h1 className="hero-head relative flex flex-1 flex-col justify-between pb-8">
-            <span className="hero-eyebrow t-eyebrow anim-fade block text-lantern">{biz.preview ? `Landscaping & lawn care · ${biz.area}` : "Landscaping & lawn care · Southlake, Texas"}</span>
+            <span className={flat ? "hero-eyebrow t-eyebrow block text-lantern" : "hero-eyebrow t-eyebrow anim-fade block text-lantern"}>{biz.preview ? `Landscaping & lawn care · ${biz.area}` : "Landscaping & lawn care · Southlake, Texas"}</span>
             <span className={biz.area.length > 16 ? "hero-svc hero-svc-long" : "hero-svc"}>
               Landscaping in <span className="t-italic text-lantern">{biz.area}</span>
             </span>
             <span
-              className="hero-l1 t-mega anim-heading mt-4 block text-cream [text-shadow:0_2px_40px_rgba(22,36,28,0.35)] md:mt-6"
+              className={`hero-l1 t-mega ${flat ? "" : "anim-heading "}mt-4 block text-cream [text-shadow:0_2px_40px_rgba(22,36,28,0.35)] md:mt-6`}
               style={{ ["--d" as string]: "0.1s" }}
             >
               {biz.preview ? "Grown here." : "Grown for Texas."}
             </span>
             <span
-              className="hero-l2 t-mega anim-heading block text-right text-cream [text-shadow:0_2px_40px_rgba(22,36,28,0.35)]"
+              className={`hero-l2 t-mega ${flat ? "" : "anim-heading "}block text-right text-cream [text-shadow:0_2px_40px_rgba(22,36,28,0.35)]`}
               style={{ ["--d" as string]: "0.25s" }}
             >
               <span className="t-italic text-lantern">Kept</span> like home.
             </span>
           </h1>
 
-          <div className="hero-foot anim-fade flex flex-col gap-6 md:flex-row md:items-end md:justify-between" style={{ ["--d" as string]: "0.5s" }}>
+          <div className={`hero-foot ${flat ? "" : "anim-fade "}flex flex-col gap-6 md:flex-row md:items-end md:justify-between`} style={{ ["--d" as string]: "0.5s" }}>
             <div className="hero-cta flex flex-wrap items-center gap-3">
               {tel && (
                 <Button href={tel} variant="lantern" icon="phone" className="hero-call">

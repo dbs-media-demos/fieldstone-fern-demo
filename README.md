@@ -19,3 +19,4 @@ npm run dev -- --port 4105
 - Content lives in `src/content/*`. Photo credits are in `public/images/SOURCES.md`.
 - `public/fonts/*.woff2` are the phones' only web fonts: the latin Fraunces roman and italic with fonttools, pinned to wght 390 and 340. Add phone-only styles with the `phone:` variant or the phone block at the end of `globals.css`.
 - `scripts/optimize-images.mjs` resizes source photos to 2000px masters and regenerates `src/content/image-meta.json`.
+- `/v2` (and `/for/<token>/v2`) is the homepage without 3D: a canvas 2D lawn hero, the yard on its stills. Its plates come from the 3D hero scene: `npm i --no-save esbuild`, then `node _src/plates/render.mjs` (uses installed Chrome via Playwright; set `PLAYWRIGHT` to a Playwright path if it isn't installed here). Re-run after changing `components/fx/lawn3d/HeroLawnScene.ts`.

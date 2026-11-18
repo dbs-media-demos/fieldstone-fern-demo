@@ -63,13 +63,13 @@ export function DemoPill() {
   );
 }
 
-/** Sticky bottom bar on phones: Call (showing the number) + Get a quote. On the home page the quote form is in the page itself. */
+/** Sticky bottom bar on phones: Call (showing the number) + Get a quote. On the home page (/, /v2, previews) the quote form is in the page itself. */
 export function MobileBar() {
   const biz = useBiz();
   const pathname = usePathname();
   if (pathname === "/free-estimate") return null;
   const tel = telOf(biz);
-  const home = pathname === "/" || pathname.startsWith("/for/");
+  const home = pathname === "/" || pathname === "/v2" || pathname.startsWith("/for/");
   const quote = "inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-full bg-terracotta font-medium text-cream";
   return (
     <div className="mobile-bar fixed inset-x-0 bottom-0 z-40 border-t border-forest/10 bg-cream p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] lg:hidden phone:block">

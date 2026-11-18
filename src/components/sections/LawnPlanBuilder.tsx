@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { Button } from "@/components/ui/Button";
 import { acresLabel, estimate, frequencies, planServices, yard, type Frequency, type PlanServiceId } from "@/content/pricing";
 import { gsap, hasMotion, prefersReducedMotion, rafTween } from "@/lib/gsap";
 import { after3DGate, demote3D, queue3D } from "@/lib/three-gate";
+import { No3DContext } from "@/lib/no-3d";
 import type { Yard, YardLayer } from "@/components/fx/lawn3d/YardScene";
 
 /** Thousands separators without Intl (cheap during hydration). */
@@ -35,6 +36,8 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
   const canvas = useRef<HTMLCanvasElement>(null);
   const yardRef = useRef<Yard | null>(null);
   const [live, setLive] = useState(false);
+  // /v2 (the homepage without 3D): the stills stay and three.js is never fetched
+  const off = useContext(No3DContext);
   const on = (s: PlanServiceId) => selected.includes(s);
   const size = (sqft - yard.min) / (yard.max - yard.min);
   const state = {
@@ -49,6 +52,7 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
   const stateRef = useRef(state);
 
   useEffect(() => {
+    if (off) return;
     let disposed = false;
     let detach = () => {};
     let drop = 0;
@@ -123,7 +127,7 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
       yardRef.current?.dispose();
       yardRef.current = null;
     };
-  }, []);
+  }, [off]);
 
   useEffect(() => {
     stateRef.current = state;
@@ -150,7 +154,7 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
           </picture>
         ))}
       </div>
-      <canvas ref={canvas} aria-hidden className={clsx("absolute inset-0 hidden h-full w-full transition-opacity duration-700 lg:block", live ? "opacity-100" : "opacity-0")} />
+      {!off && <canvas ref={canvas} aria-hidden className={clsx("absolute inset-0 hidden h-full w-full transition-opacity duration-700 lg:block", live ? "opacity-100" : "opacity-0")} />}
     </div>
   );
 }
