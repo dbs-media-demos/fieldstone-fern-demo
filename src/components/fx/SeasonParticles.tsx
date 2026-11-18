@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { isTouch, prefersReducedMotion } from "@/lib/gsap";
+import { onIdle } from "@/lib/idle";
 
 export type ParticleMode = "spring" | "summer" | "fall" | "winter";
 
@@ -189,12 +190,10 @@ export function SeasonParticles({ mode, className }: { mode: ParticleMode; class
     io.observe(cv);
     window.addEventListener("resize", resize);
 
-    const ric = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 200));
-    const cic = window.cancelIdleCallback ?? window.clearTimeout;
-    const idle = ric(start);
+    const cancelIdle = onIdle(start, { fallbackMs: 200 });
 
     return () => {
-      cic(idle as number);
+      cancelIdle();
       cancelAnimationFrame(raf);
       io.disconnect();
       window.removeEventListener("resize", resize);
