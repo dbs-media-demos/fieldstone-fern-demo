@@ -25,7 +25,10 @@ export function Header({ services }: { services: { slug: string; short: string }
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    let last = window.scrollY;
+    // Hidden flips only after a clear 12 px one way since the last turn: Lenis eases a scroll out in
+    // tiny steps (and can step back a pixel), which compared event to event flickered the header.
+    let anchor = window.scrollY;
+    let hid = false;
     let raf = 0;
     const measure = () => {
       raf = 0;
@@ -36,8 +39,15 @@ export function Header({ services }: { services: { slug: string; short: string }
         .find((el) => !headerRef.current?.contains(el) && !el.closest("#site-menu"));
       const dark = !!under?.closest(".theme-forest, .theme-fern");
       setMode(y < 40 ? "top" : dark ? "dark" : "light");
-      setHidden(y > 400 && y > last + 4 ? true : y < last - 4 ? false : (h) => h);
-      last = y;
+      if (y <= 400) {
+        hid = false;
+        anchor = y;
+      } else if (hid ? y > anchor : y < anchor) anchor = y; // still going the way it's set: follow the turning point
+      else if (Math.abs(y - anchor) > 12) {
+        hid = !hid;
+        anchor = y;
+      }
+      setHidden(hid);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(measure);
