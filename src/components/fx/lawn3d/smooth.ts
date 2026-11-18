@@ -49,14 +49,17 @@ export async function warmUp(renderer: THREE.WebGLRenderer, scene: THREE.Scene, 
 
 /**
  * Watches the first `span` ms of live frames (skipping a short warm-up). Below `minFps` on average,
- * or any single frame over `maxFrame` ms, it calls `onSlow` once. Gaps while the loop is paused
- * (off screen, tab hidden) are not counted: call `pause()` when the loop stops.
+ * or a 3rd frame over `maxFrame` ms (or one over 4x that), it calls `onSlow` once. Gaps while the loop
+ * is paused (off screen, tab hidden) are not counted: call `pause()` when the loop stops.
+ * The warm-up frames pay one-off costs (the GPU's first real draw: 371 ms on a refresh of a PC that
+ * then ran 112 fps, 18 Nov), and a hitch or two (a font, an image decode) isn't a slow computer.
  */
-export function frameWatch(onSlow: () => void, { span = 2000, minFps = 45, maxFrame = 100, skip = 4 } = {}) {
+export function frameWatch(onSlow: () => void, { span = 2000, minFps = 45, maxFrame = 100, skip = 5 } = {}) {
   let last = 0;
   let seen = 0;
   let total = 0;
   let count = 0;
+  let hitches = 0;
   let done = false;
   let resolve = () => {};
   const settled = new Promise<void>((r) => (resolve = r));
@@ -77,7 +80,7 @@ export function frameWatch(onSlow: () => void, { span = 2000, minFps = 45, maxFr
         if (++seen > skip) {
           total += dt;
           count++;
-          if (dt > maxFrame) return finish(true);
+          if (dt > maxFrame && (++hitches >= 3 || dt > maxFrame * 4)) return finish(true);
           if (total >= span) return finish(1000 / (total / count) < minFps);
         }
       }

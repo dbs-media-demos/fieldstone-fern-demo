@@ -77,9 +77,9 @@ export function Hero({ variant = "3d" }: { variant?: "3d" | "2d" } = {}) {
           lawn = await createHeroLawn(cv, {
             progress: () => mow.current.p,
             onReady: () => !disposed && setLawnLive(true),
-            // too slow for this machine: back to the still for the rest of the visit, then free the GPU
+            // too slow for this machine: back to the still (two slow page loads keep it for the visit), then free the GPU
             onSlow: () => {
-              demote3D();
+              demote3D("slow");
               detach();
               lawn?.setVisible(false); // freeze on the last frame while it fades out
               setLawnLive(false);
@@ -90,7 +90,7 @@ export function Hero({ variant = "3d" }: { variant?: "3d" | "2d" } = {}) {
             },
           });
         } catch {
-          demote3D(); // no WebGL or no proper GPU: the still stays, and so do the others
+          demote3D("gpu"); // no WebGL or no proper GPU: the still stays, and so do the others
           return;
         }
         const l = lawn;

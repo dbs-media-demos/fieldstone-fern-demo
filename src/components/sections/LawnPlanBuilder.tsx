@@ -64,9 +64,9 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
       let y: Yard;
       try {
         y = await createYard(cv, {
-          // too slow for this machine: back to the stills for the rest of the visit, then free the GPU
+          // too slow for this machine: back to the stills (two slow page loads keep them for the visit), then free the GPU
           onSlow: () => {
-            demote3D();
+            demote3D("slow");
             detach();
             y.setVisible(false); // freeze on the last frame while it fades out
             setLive(false);
@@ -77,7 +77,7 @@ function YardView({ sqft, selected, weekly }: { sqft: number; selected: PlanServ
           },
         });
       } catch {
-        demote3D(); // no WebGL or no proper GPU: the stills stay, and so do the others
+        demote3D("gpu"); // no WebGL or no proper GPU: the stills stay, and so do the others
         return;
       }
       if (disposed) return y.dispose();

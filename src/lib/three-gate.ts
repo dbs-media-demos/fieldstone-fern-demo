@@ -7,21 +7,35 @@
  */
 export const DESKTOP_3D_QUERY = "(min-width: 1024px) and (hover: hover) and (pointer: fine)";
 
+/**
+ * No proper GPU: every 3D scene stays a still for the rest of the visit at once. A scene that ran
+ * slow costs only that page load; two slow page loads keep the stills for the visit. One slow start
+ * (the GPU's first draw on a refresh, a hitch while the page was still loading) used to keep them
+ * for the whole tab: on 18 Nov every refresh got the still. Under the old key only "gpu" counts now,
+ * so a tab's old "still" from a slow start doesn't hold.
+ */
 const STILL_KEY = "fnf-3d";
+const SLOW_KEY = "fnf-3d-slow";
+const SLOW_LIMIT = 2;
 
-/** A scene ran slow (or there is no proper GPU): every 3D scene stays a still for the rest of the visit. */
+// This page load ran slow: the scenes after it stay stills too (counted once per load)
+let slowHere = false;
+
 export function is3DDemoted() {
+  if (slowHere) return true;
   try {
-    return sessionStorage.getItem(STILL_KEY) === "still";
+    return sessionStorage.getItem(STILL_KEY) === "gpu" || Number(sessionStorage.getItem(SLOW_KEY) || 0) >= SLOW_LIMIT;
   } catch {
     return false;
   }
 }
 
-export function demote3D() {
+export function demote3D(why: "gpu" | "slow") {
   try {
-    sessionStorage.setItem(STILL_KEY, "still");
+    if (why === "gpu") sessionStorage.setItem(STILL_KEY, why);
+    else if (!slowHere) sessionStorage.setItem(SLOW_KEY, String(Number(sessionStorage.getItem(SLOW_KEY) || 0) + 1));
   } catch {}
+  if (why === "slow") slowHere = true;
 }
 
 export function can3D() {
